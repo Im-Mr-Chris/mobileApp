@@ -224,8 +224,8 @@ export default class SellNftScreen extends React.Component<Props, State> {
                 }>
                     <Text style={[themeStyles.fontColorSub, styles.serialNumber]}>#{item.SerialNumber}</Text>
                 </View>
-                <Text style={[styles.balance, themeStyles.fontColorMain]}> {this.calculateBidderBalance(item.BidAmountNanos)} </Text>
-                <Text style={[styles.coinPrice, themeStyles.fontColorMain]}>~$ {calculateAndFormatBitCloutInUsd(item.BidAmountNanos)} </Text>
+                <Text style={[styles.balance, themeStyles.fontColorMain]}>{this.calculateBidderBalance(item.BidAmountNanos)}</Text>
+                <Text style={[styles.coinPrice, themeStyles.fontColorMain]}>~${calculateAndFormatBitCloutInUsd(item.BidAmountNanos)}</Text>
             </View>
         </View>;
 
