@@ -70,7 +70,7 @@ export class PostQuoteStatsComponent extends React.Component<Props, State> {
             }
 
             const response = await api.getQuotesForPost(globals.user.publicKey, this.props.postHashHex, 50, this.state.posts.length);
-            let quotes: Post[] = response.QuoteReclouts;
+            let quotes: Post[] = response.QuoteReposts;
 
             const newQuotes = this.state.posts;
             if (quotes?.length > 0) {
@@ -86,7 +86,8 @@ export class PostQuoteStatsComponent extends React.Component<Props, State> {
                 this.setState({ posts: newQuotes, isLoading: false, isLoadingMore: false });
             }
 
-        } catch {
+        } catch(e) {
+            console.log(e);
         }
     }
 

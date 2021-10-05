@@ -117,8 +117,8 @@ export class PostComponent extends React.Component<Props, State> {
             this.props.navigation.push(
                 'Post',
                 {
-                    postHashHex: this.props.post.RecloutedPostEntryResponse.PostHashHex,
-                    key: 'Post_' + this.props.post.RecloutedPostEntryResponse.PostHashHex
+                    postHashHex: this.props.post.RepostedPostEntryResponse.PostHashHex,
+                    key: 'Post_' + this.props.post.RepostedPostEntryResponse.PostHashHex
                 }
             );
         }
@@ -272,13 +272,13 @@ export class PostComponent extends React.Component<Props, State> {
                         }
 
                         {
-                            this.props.post.RecloutedPostEntryResponse && (this.props.recloutedPostIndex == null || this.props.recloutedPostIndex < 2) &&
+                            this.props.post.RepostedPostEntryResponse && (this.props.recloutedPostIndex == null || this.props.recloutedPostIndex < 2) &&
                             <View style={[styles.recloutedPostContainer, themeStyles.recloutBorderColor]}>
                                 <TouchableOpacity onPress={() => this.goToRecloutedPost()} activeOpacity={1}>
                                     <PostComponent
                                         navigation={this.props.navigation}
                                         route={this.props.route}
-                                        post={this.props.post.RecloutedPostEntryResponse}
+                                        post={this.props.post.RepostedPostEntryResponse}
                                         hideBottomBorder={true}
                                         recloutedPostIndex={this.props.recloutedPostIndex == null ? 1 : this.props.recloutedPostIndex + 1}
                                     />

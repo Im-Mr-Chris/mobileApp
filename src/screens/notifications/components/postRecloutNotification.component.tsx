@@ -50,7 +50,7 @@ export class PostRecloutNotificationComponent extends React.Component<Props> {
                         profile={this.props.profile}
                     />
                     <Text style={[globalStyles.fontWeight500, themeStyles.fontColorMain]}> reclouted your post: </Text>
-                    <Text style={[notificationsStyles.postText, themeStyles.fontColorSub]} numberOfLines={1}>{this.props.post?.RecloutedPostEntryResponse?.Body}</Text>
+                    <Text style={[notificationsStyles.postText, themeStyles.fontColorSub]} numberOfLines={1}>{this.props.post?.RepostedPostEntryResponse?.Body}</Text>
                 </View>
             </TouchableOpacity>
         );

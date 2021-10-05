@@ -21,14 +21,14 @@ function checkMention(p_notification: Notification, p_posts: any): boolean {
     }
 
     const parentPostHashHex = p_notification.Metadata.SubmitPostTxindexMetadata?.ParentPostHashHex;
-    if (!post.RecloutedPostEntryResponse) {
+    if (!post.RepostedPostEntryResponse) {
         if (parentPostHashHex) {
             const parentPost = p_posts[parentPostHashHex];
             return !parentPost || parentPost.ProfileEntryResponse.PublicKeyBase58Check !== globals.user.publicKey;
         } else {
             return true;
         }
-    } else if (post.RecloutedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check !== globals.user.publicKey) {
+    } else if (post.RepostedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check !== globals.user.publicKey) {
         return true;
     }
 
@@ -38,8 +38,8 @@ function checkMention(p_notification: Notification, p_posts: any): boolean {
 function checkRecloutNotification(p_notification: Notification, p_posts: any): boolean {
     const postHashHex = p_notification.Metadata.SubmitPostTxindexMetadata?.PostHashBeingModifiedHex as string;
     const post: Post = p_posts[postHashHex];
-    return !!post?.RecloutedPostEntryResponse &&
-        post.RecloutedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check === globals.user.publicKey;
+    return !!post?.RepostedPostEntryResponse &&
+        post.RepostedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check === globals.user.publicKey;
 }
 
 function checkCreatorCoinTransfer(p_notification: Notification, p_diamond: boolean): boolean {

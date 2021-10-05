@@ -186,7 +186,7 @@ export class PostOptionsComponent extends React.Component<Props> {
                             this.props.post.PostHashHex,
                             this.props.post.Body,
                             this.props.post.ImageURLs,
-                            this.props.post.RecloutedPostEntryResponse?.PostHashHex
+                            this.props.post.RepostedPostEntryResponse?.PostHashHex
                         ).then(
                             async p_response => {
                                 const transactionHex = p_response.TransactionHex;

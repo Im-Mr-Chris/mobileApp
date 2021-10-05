@@ -97,8 +97,8 @@ export function ProfileStats(
                     commentsCount += post.CommentCount;
                 }
 
-                if (isNumber(post.RecloutCount)) {
-                    recloutsCount += post.RecloutCount;
+                if (isNumber(post.RepostCount)) {
+                    recloutsCount += post.RepostCount;
                 }
             }
 

@@ -263,8 +263,8 @@ export class NotificationsScreen extends React.Component<Props, State> {
             return undefined;
         }
 
-        if (post.RecloutedPostEntryResponse) {
-            if (post.RecloutedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check === globals.user.publicKey) {
+        if (post.RepostedPostEntryResponse) {
+            if (post.RepostedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check === globals.user.publicKey) {
                 return <PostRecloutNotificationComponent
                     post={post}
                     notification={notification}

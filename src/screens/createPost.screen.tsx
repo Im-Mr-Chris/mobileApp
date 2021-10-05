@@ -32,7 +32,7 @@ export function CreatePostScreen({ navigation, route }: any) {
 
         let images = imagesBase64 ?? [];
 
-        if (postText || images.length > 0 || ((reclout || !!editedPost?.RecloutedPostEntryResponse) && images.length === 0 && !videoLink)) {
+        if (postText || images.length > 0 || ((reclout || !!editedPost?.RepostedPostEntryResponse) && images.length === 0 && !videoLink)) {
             if (isMounted) {
                 setLoading(true);
             }
@@ -85,7 +85,7 @@ export function CreatePostScreen({ navigation, route }: any) {
         let parentPostHashHex = '';
 
         if (editPost) {
-            recloutedPostHashHex = editedPost?.RecloutedPostEntryResponse?.PostHashHex;
+            recloutedPostHashHex = editedPost?.RepostedPostEntryResponse?.PostHashHex;
             parentPostHashHex = editedPost?.ParentStakeID;
         } else {
             recloutedPostHashHex = recloutedPost?.PostHashHex;
@@ -135,7 +135,7 @@ export function CreatePostScreen({ navigation, route }: any) {
 
     function handleNewPostSuccess(p_response: any) {
         const newPost = p_response.PostEntryResponse as Post;
-        newPost.PostEntryReaderState = { LikedByReader: false, RecloutedByReader: false, DiamondLevelBestowed: 0 };
+        newPost.PostEntryReaderState = { LikedByReader: false, RepostedByReader: false, DiamondLevelBestowed: 0 };
 
         const canGoBack = navigation.canGoBack();
 
@@ -158,7 +158,7 @@ export function CreatePostScreen({ navigation, route }: any) {
 
     function handleCommentSuccess(p_response: any) {
         const newComment = p_response.PostEntryResponse as Post;
-        newComment.PostEntryReaderState = { LikedByReader: false, RecloutedByReader: false, DiamondLevelBestowed: 0 };
+        newComment.PostEntryReaderState = { LikedByReader: false, RepostedByReader: false, DiamondLevelBestowed: 0 };
 
         const parentPostHashHex = editPost ? editedPost.ParentStakeID : parentPost.PostHashHex;
 
@@ -188,8 +188,8 @@ export function CreatePostScreen({ navigation, route }: any) {
                     const profile = p_user.ProfileEntryResponse;
 
                     if (editPost) {
-                        if (editedPost.RecloutedPostEntryResponse) {
-                            setRecloutedPostEntry(editedPost.RecloutedPostEntryResponse);
+                        if (editedPost.RepostedPostEntryResponse) {
+                            setRecloutedPostEntry(editedPost.RepostedPostEntryResponse);
                         }
                         setPostText(editedPost.Body);
                         if (editedPost.ImageURLs?.length > 0) {

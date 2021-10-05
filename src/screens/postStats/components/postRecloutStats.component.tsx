@@ -79,7 +79,7 @@ export class PostRecloutStatsComponent extends React.Component<Props, State> {
             }
 
             const response = await api.getRecloutersForPost(globals.user.publicKey, this.props.postHashHex, 50, this.state.profiles.length);
-            const profiles: Profile[] = response.Reclouters;
+            const profiles: Profile[] = response.Reposters;
 
             const newProfiles = this.state.profiles;
             if (profiles?.length > 0) {

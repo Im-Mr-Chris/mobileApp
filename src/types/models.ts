@@ -38,8 +38,8 @@ export interface Profile {
 
 export interface PostReaderState {
     LikedByReader: boolean;
-    RecloutedByReader: boolean;
-    RecloutPostHashHex?: string;
+    RepostedByReader: boolean;
+    RepostPostHashHex?: string;
     DiamondLevelBestowed: number;
 }
 
@@ -57,8 +57,8 @@ export interface Post {
     PostEntryReaderState: PostReaderState;
     CommentCount: number;
     Comments: Post[];
-    RecloutCount: number;
-    RecloutedPostEntryResponse: Post;
+    RepostCount: number;
+    RepostedPostEntryResponse: Post;
     DiamondCount: number;
     ParentStakeID: string;
     PostExtraData: PostExtraData;
@@ -71,7 +71,7 @@ export interface Post {
     ParentPosts: Post;
     PosterPublicKeyBase58Check: string;
     StakeMultipleBasisPoints: number;
-    QuoteRecloutCount: number;
+    QuoteRepostCount: number;
     IsNFT: boolean;
     SerialNumber: number;
     NumNFTCopies: number;

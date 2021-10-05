@@ -183,7 +183,7 @@ export class HotFeedComponent extends React.Component<Props, State> {
                 p_post => !!p_post.ProfileEntryResponse &&
                     !p_post.IsHidden &&
                     !blockedUsers[p_post.ProfileEntryResponse.PublicKeyBase58Check] &&
-                    !blockedUsers[p_post.RecloutedPostEntryResponse?.ProfileEntryResponse?.PublicKeyBase58Check]
+                    !blockedUsers[p_post.RepostedPostEntryResponse?.ProfileEntryResponse?.PublicKeyBase58Check]
             );
         }
         return posts;

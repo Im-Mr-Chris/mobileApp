@@ -262,7 +262,7 @@ export class CloutCastFeedComponent extends React.Component<Props, State>{
                 p_promotion => !!p_promotion.post?.ProfileEntryResponse &&
                     !p_promotion.post.IsHidden &&
                     !blockedUsers[p_promotion.post.ProfileEntryResponse.PublicKeyBase58Check] &&
-                    !blockedUsers[p_promotion.post.RecloutedPostEntryResponse?.ProfileEntryResponse?.PublicKeyBase58Check] &&
+                    !blockedUsers[p_promotion.post.RepostedPostEntryResponse?.ProfileEntryResponse?.PublicKeyBase58Check] &&
                     this._blackList.indexOf(p_promotion.post.ProfileEntryResponse.PublicKeyBase58Check) === -1
             );
         }

@@ -215,7 +215,7 @@ function createPost(
             UpdaterPublicKeyBase58Check: p_userKey,
             PostHashHexToModify: p_postHashHexToModify,
             ParentStakeID: p_parentPostStakeId,
-            RecloutedPostHashHex: p_recloutedPostHashHex,
+            RepostedPostHashHex: p_recloutedPostHashHex,
             Title: '',
             BodyObj:
             {
@@ -263,7 +263,7 @@ function hidePost(p_userKey: string, p_postHashHex: string, p_bodyText: string, 
             Sign: true,
             Validate: true,
             Broadcast: true,
-            RecloutedPostHashHex: p_recloutedPostHashHex
+            RepostedPostHashHex: p_recloutedPostHashHex
         }
     );
 }
@@ -485,7 +485,7 @@ function getLikesForPost(p_userKey: string, p_postHash: string, limit: number, o
 }
 
 function getRecloutersForPost(p_userKey: string, p_postHash: string, limit: number, offset: number) {
-    const route = 'get-reclouts-for-post';
+    const route = 'get-reposts-for-post';
     return post(
         route,
         {
@@ -498,7 +498,7 @@ function getRecloutersForPost(p_userKey: string, p_postHash: string, limit: numb
 }
 
 function getQuotesForPost(p_userKey: string, p_postHash: string, limit: number, offset: number) {
-    const route = 'get-quote-reclouts-for-post';
+    const route = 'get-quote-reposts-for-post';
     return post(
         route,
         {
