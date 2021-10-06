@@ -5,7 +5,7 @@ import ProfileInfoImageComponent from './profileInfoImage.component';
 import ProfileInfoUsernameComponent from './profileInfoUsername.component';
 import CoinPriceComponent from './coinPrice.component';
 import { Ionicons } from '@expo/vector-icons';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { Profile } from '@types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
@@ -33,7 +33,7 @@ export default class ProfileInfoCardComponent extends React.Component<Props> {
     }
 
     render(): JSX.Element {
-        const coinPrice = calculateAndFormatBitCloutInUsd(this.props.profile?.CoinPriceBitCloutNanos);
+        const coinPrice = calculateAndFormatDeSoInUsd(this.props.profile?.CoinPriceDeSoNanos);
         return <View style={styles.container}>
             <ProfileInfoImageComponent
                 peekDisabled={this.props.peekDisabled}

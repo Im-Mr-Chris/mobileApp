@@ -1,7 +1,7 @@
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { calculateAndFormatBitCloutInUsd, formatNumber, getAnonymousProfile } from '@services';
+import { calculateAndFormatDeSoInUsd, formatNumber, getAnonymousProfile } from '@services';
 import { CreatorCoinHODLer } from '@types';
 import { themeStyles } from '@styles';
 import ProfileInfoCardComponent from './profileInfo/profileInfoCard.component';
@@ -29,8 +29,8 @@ export function CreatorCoinHODLerComponent({ creatorCoinPrice, userWhoHODL: user
                     userWhoHODL.ProfileEntryResponse = getAnonymousProfile(userWhoHODL.HODLerPublicKeyBase58Check);
                 }
 
-                const hodlerCoinPriceUSD = calculateAndFormatBitCloutInUsd(
-                    userWhoHODL.ProfileEntryResponse.CoinPriceBitCloutNanos);
+                const hodlerCoinPriceUSD = calculateAndFormatDeSoInUsd(
+                    userWhoHODL.ProfileEntryResponse.CoinPriceDeSoNanos);
                 const hodlerAmountCoins = userWhoHODL.BalanceNanos / 1000000000;
 
                 if (creatorCoinPrice == null) {

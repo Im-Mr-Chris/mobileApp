@@ -4,7 +4,7 @@ import { Profile } from '../types';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { themeStyles } from '@styles';
 import { constants, globals } from '@globals';
-import { api, cache, calculateAndFormatBitCloutInUsd } from '@services';
+import { api, cache, calculateAndFormatDeSoInUsd } from '@services';
 import { signing } from '@services/authorization/signing';
 import CloutFeedButton from '@components/cloutfeedButton.component';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
@@ -24,7 +24,7 @@ export function ProfileListCardComponent({ profile, isFollowing }:
 
     useEffect(
         () => {
-            const coinPrice = calculateAndFormatBitCloutInUsd(profile.CoinPriceBitCloutNanos);
+            const coinPrice = calculateAndFormatDeSoInUsd(profile.CoinPriceDeSoNanos);
 
             if (mount) {
                 setShowFollowButton(profile.PublicKeyBase58Check !== globals.user.publicKey);

@@ -6,7 +6,7 @@ export * from './api/searchCloutApi';
 export * from './api/nftApi';
 export * from './dataCaching';
 export * from './actionSheet';
-export * from './bitCloutCalculator';
+export * from './deSoCalculator';
 export * from './diamondAnimation';
 export * from './eventManager';
 export * from './helpers';

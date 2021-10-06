@@ -5,7 +5,7 @@ import { Profile } from '@types';
 import { api } from '@services';
 import { globals } from '@globals/globals';
 import { themeStyles } from '@styles/globalColors';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
@@ -69,8 +69,8 @@ export class PostDiamondStatsComponent extends React.Component<Props, State> {
             const newDiamondSenders = this.state.diamondSenders;
             if (diamondSenders?.length > 0) {
                 for (const diamondSender of diamondSenders) {
-                    diamondSender.DiamondSenderProfile.FormattedCoinPriceUSD = calculateAndFormatBitCloutInUsd(
-                        diamondSender.DiamondSenderProfile.CoinPriceBitCloutNanos
+                    diamondSender.DiamondSenderProfile.FormattedCoinPriceUSD = calculateAndFormatDeSoInUsd(
+                        diamondSender.DiamondSenderProfile.CoinPriceDeSoNanos
                     );
                 }
 

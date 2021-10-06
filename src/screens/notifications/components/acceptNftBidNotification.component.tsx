@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Profile, Notification } from '@types';
 import { globalStyles } from '@styles/globalStyles';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import ProfileInfoImageComponent from '@components/profileInfo/profileInfoImage.component';
 import ProfileInfoUsernameComponent from '@components/profileInfo/profileInfoUsername.component';
 import { notificationsStyles } from '../styles/notificationStyles';
@@ -31,12 +31,12 @@ export class AcceptNftBidNotificationComponent extends React.Component<Props> {
     render() {
         const output = this.props.notification.Metadata.AcceptNFTBidTxindexMetadata?.BidAmountNanos;
         const serialNumber = this.props.notification.Metadata.AcceptNFTBidTxindexMetadata?.SerialNumber;
-        let bitCloutAmount = '';
+        let deSoAmount = '';
         let usdAmount = '';
 
         if (output) {
-            bitCloutAmount = (output / 1000000000).toFixed(3);
-            usdAmount = calculateAndFormatBitCloutInUsd(output);
+            deSoAmount = (output / 1000000000).toFixed(3);
+            usdAmount = calculateAndFormatDeSoInUsd(output);
         }
 
         return (
@@ -58,7 +58,7 @@ export class AcceptNftBidNotificationComponent extends React.Component<Props> {
                         profile={this.props.profile}
                     />
                     <Text style={[globalStyles.fontWeight500, themeStyles.fontColorMain]}> accepted your bid of</Text>
-                    <Text style={[notificationsStyles.usernameText, themeStyles.fontColorMain]}> {bitCloutAmount} DESO</Text>
+                    <Text style={[notificationsStyles.usernameText, themeStyles.fontColorMain]}> {deSoAmount} DESO</Text>
                     <Text style={[notificationsStyles.usernameText, themeStyles.fontColorMain]}> (~${usdAmount}) </Text>
 
                     <Text style={[globalStyles.fontWeight500, themeStyles.fontColorMain]}>for serial number </Text>

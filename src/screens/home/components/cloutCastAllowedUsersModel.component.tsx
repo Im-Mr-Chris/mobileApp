@@ -5,7 +5,7 @@ import React from 'react';
 import { TouchableOpacity, View, Image, Text, ActivityIndicator, Dimensions, StyleSheet } from 'react-native';
 import Modal from 'react-native-modal';
 import { MaterialIcons } from '@expo/vector-icons';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { FlatList } from 'react-native-gesture-handler';
 import { settingsGlobals } from '@globals/settingsGlobals';
 import { Profile } from '@types';
@@ -115,7 +115,7 @@ export class CloutCastAllowedUsersModelComponent extends React.Component<Props, 
                         <View style={[styles.profileCoinPriceContainer, { backgroundColor: settingsGlobals.darkMode ? '#171717' : '#ebebeb' }]}>
                             <Text
                                 style={[styles.profileCoinPriceText, themeStyles.fontColorMain]}
-                            >~${calculateAndFormatBitCloutInUsd(item.CoinPriceBitCloutNanos)}
+                            >~${calculateAndFormatDeSoInUsd(item.CoinPriceDeSoNanos)}
                             </Text>
                         </View>
                     </View>
@@ -208,21 +208,6 @@ const styles = StyleSheet.create(
         profileCoinPriceText: {
             fontSize: 10,
             fontWeight: '600'
-        },
-        addAccountButton: {
-            paddingTop: 20,
-            paddingBottom: 20,
-            paddingLeft: 10,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center'
-        },
-        addAccountButtonIcon: {
-            marginLeft: 11,
-            marginRight: 18
-        },
-        addAccountButtonText: {
-            fontWeight: '500'
         }
     }
 );

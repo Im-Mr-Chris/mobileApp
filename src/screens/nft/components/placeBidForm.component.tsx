@@ -6,7 +6,7 @@ import { BidEdition, EventType, Post } from '@types';
 import { AntDesign } from '@expo/vector-icons';
 import { themeStyles } from '@styles/globalColors';
 import { formatNumber } from '@services/helpers';
-import { calculateAndFormatBitCloutInUsd, calculateBitCloutInUSD } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd, calculateDeSoInUSD } from '@services/deSoCalculator';
 import { globals } from '@globals/globals';
 import { api, cache, nftApi } from '@services';
 import { signing } from '@services/authorization/signing';
@@ -90,7 +90,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
     private setCloutAmount(clout: string): void {
         const parsedClout = Number(clout.split(',').join('.'));
 
-        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerBitCloutExchangeRate) / 100).toFixed(2);
+        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerDeSoExchangeRate) / 100).toFixed(2);
         if (this._isMounted && !isNaN(parsedClout)) {
             this.setState({ clout, usd });
         }
@@ -99,7 +99,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
     private setUsdAmount(usd: string): void {
         const parsedUsd = Number(usd.split(',').join('.'));
 
-        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerBitCloutExchangeRate).toFixed(4);
+        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerDeSoExchangeRate).toFixed(4);
         if (this._isMounted && !isNaN(parsedUsd)) {
             this.setState({ usd, clout: clout });
         }
@@ -116,7 +116,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
                     (prevState) => (
                         {
                             usd: (parsedUsd + 1).toFixed(2),
-                            clout: (Number(prevState.clout.split(',').join('.')) + (100 / globals.exchangeRate.USDCentsPerBitCloutExchangeRate)).toFixed(4)
+                            clout: (Number(prevState.clout.split(',').join('.')) + (100 / globals.exchangeRate.USDCentsPerDeSoExchangeRate)).toFixed(4)
                         }
                     )
                 );
@@ -125,7 +125,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
                     (prevState) => (
                         {
                             usd: (parsedUsd - 1).toFixed(2),
-                            clout: (Number(prevState.clout.split(',').join('.')) - (100 / globals.exchangeRate.USDCentsPerBitCloutExchangeRate)).toFixed(4)
+                            clout: (Number(prevState.clout.split(',').join('.')) - (100 / globals.exchangeRate.USDCentsPerDeSoExchangeRate)).toFixed(4)
                         }
                     )
                 );
@@ -145,7 +145,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
                     (prevState) => (
                         {
                             clout: String((parsedClout + 1).toFixed(2)),
-                            usd: (Number(prevState.usd.split(',').join('.')) + (globals.exchangeRate.USDCentsPerBitCloutExchangeRate / 100)).toFixed(2)
+                            usd: (Number(prevState.usd.split(',').join('.')) + (globals.exchangeRate.USDCentsPerDeSoExchangeRate / 100)).toFixed(2)
                         }
                     )
                 );
@@ -154,7 +154,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
                     (prevState) => (
                         {
                             clout: String((parsedClout - 1).toFixed(2)),
-                            usd: (Number(prevState.usd.split(',').join('.')) - (globals.exchangeRate.USDCentsPerBitCloutExchangeRate / 100)).toFixed(2)
+                            usd: (Number(prevState.usd.split(',').join('.')) - (globals.exchangeRate.USDCentsPerDeSoExchangeRate / 100)).toFixed(2)
                         }
                     )
                 );
@@ -165,7 +165,7 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
 
     private isBidFormValid(bidAmountNanos: number): boolean {
 
-        const minBidAmountInUsd = formatNumber(calculateBitCloutInUSD(this.props.bidEdition.MinBidAmountNanos), true);
+        const minBidAmountInUsd = formatNumber(calculateDeSoInUSD(this.props.bidEdition.MinBidAmountNanos), true);
         const minBidAmountInClout = formatNumber(this.props.bidEdition.MinBidAmountNanos / 1000000000, true, 4);
 
         if (this.state.clout.length === 0 || this.state.usd.length === 0) {
@@ -235,11 +235,11 @@ export default class PlaceBidFormComponent extends React.Component<Props, State>
     render(): JSX.Element {
 
         const highestBid = this.state.isUsd ?
-            <>~${calculateAndFormatBitCloutInUsd(this.state.highestBid)} </> :
+            <>~${calculateAndFormatDeSoInUsd(this.state.highestBid)} </> :
             formatNumber(this.state.highestBid / 1000000000, true, 3);
 
         const lowestBid = this.state.isUsd ?
-            <>~${calculateAndFormatBitCloutInUsd(this.state.lowestBid)} </> :
+            <>~${calculateAndFormatDeSoInUsd(this.state.lowestBid)} </> :
             formatNumber(this.state.lowestBid / 1000000000, true, 3);
 
         const keyboardVerticalOffset = Platform.OS === 'ios' ? 10 : 0;

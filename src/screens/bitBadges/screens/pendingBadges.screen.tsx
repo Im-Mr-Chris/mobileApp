@@ -148,7 +148,7 @@ export class PendingScreen extends React.Component<Props, State> {
                 const profile = await api.getSingleProfile('', currBadgeIssuer);
                 coinPriceMap.set(
                     currBadgeId,
-                    profile.Profile.CoinEntry.BitCloutLockedNanos
+                    (profile.Profile as Profile).CoinEntry.DeSoLockedNanos
                 );
             }
         } catch (error) {

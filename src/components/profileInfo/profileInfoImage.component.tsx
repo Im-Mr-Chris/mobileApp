@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { api, calculateBitCloutInUSD } from '@services';
+import { api, calculateDeSoInUSD } from '@services';
 import { EventType, Profile } from '@types';
 import { eventManager, hapticsManager } from '@globals/injector';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -83,7 +83,7 @@ export default class ProfileInfoImageComponent extends React.Component<Props, St
             {
                 visible: true,
                 profile: this.props.profile,
-                coinPrice: calculateBitCloutInUSD(this.props.profile?.CoinPriceBitCloutNanos),
+                coinPrice: calculateDeSoInUSD(this.props.profile?.CoinPriceDeSoNanos),
                 navigation: this.props.navigation
             }
         );

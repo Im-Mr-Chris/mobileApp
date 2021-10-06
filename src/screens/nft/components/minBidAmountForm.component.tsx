@@ -61,7 +61,7 @@ export default class MinBidAmountFormComponent extends React.Component<Props, St
     private setCloutAmount(clout: string): void {
         const parsedClout = Number(clout.split(',').join('.'));
 
-        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerBitCloutExchangeRate) / 100).toFixed(2);
+        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerDeSoExchangeRate) / 100).toFixed(2);
         if (this._isMounted && !isNaN(parsedClout)) {
             this.setState({ clout, usd });
         }
@@ -69,7 +69,7 @@ export default class MinBidAmountFormComponent extends React.Component<Props, St
 
     private setUsdAmount(usd: string): void {
         const parsedUsd = Number(usd.split(',').join('.'));
-        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerBitCloutExchangeRate).toFixed(4);
+        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerDeSoExchangeRate).toFixed(4);
         if (this._isMounted && !isNaN(parsedUsd)) {
             this.setState({ usd, clout });
         }

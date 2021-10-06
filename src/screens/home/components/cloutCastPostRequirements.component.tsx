@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons, FontAwesome5, AntDesign } from '@expo/vector-icons';
 import { CloutCastPromotion } from '@types';
 import { themeStyles } from '@styles/globalColors';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { CloutCastAllowedUsersModelComponent } from './cloutCastAllowedUsersModel.component';
 import { ParamListBase } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -46,7 +46,7 @@ export class CloutCastPostRequirementsComponent extends React.Component<Props, S
             coinPrice = undefined;
         }
 
-        const formattedCoinPrice: string | undefined = coinPrice != null ? calculateAndFormatBitCloutInUsd(coinPrice) : undefined;
+        const formattedCoinPrice: string | undefined = coinPrice != null ? calculateAndFormatDeSoInUsd(coinPrice) : undefined;
 
         let allowedUsersCount: number | undefined = criteria.allowedUsers?.length;
         if (allowedUsersCount === 0) {

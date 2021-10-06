@@ -45,7 +45,7 @@ function generateUserCredentials(keychain: any): { authenticatedUser: Authentica
     const seedHex = crypto.keychainToSeedHex(keychain);
 
     const privateKey = crypto.seedHexToPrivateKey(seedHex);
-    const publicKey = crypto.privateKeyToBitCloutPublicKey(privateKey);
+    const publicKey = crypto.privateKeyToDeSoPublicKey(privateKey);
 
     const randomKey = new Buffer(Random.getRandomBytes(32));
     const iv = new Buffer(Random.getRandomBytes(16));

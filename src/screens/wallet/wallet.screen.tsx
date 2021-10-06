@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, RefreshControl, Text, SectionList } from 'react-native';
 import { globals } from '@globals/globals';
 import { themeStyles } from '@styles/globalColors';
-import { calculateAndFormatBitCloutInUsd, calculateBitCloutInUSD } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd, calculateDeSoInUSD } from '@services/deSoCalculator';
 import { CoinEntry, CreatorCoinHODLer, User } from '@types';
 import { TabConfig, TabsComponent } from '@components/tabs.component';
 import { CreatorCoinHODLerComponent } from '@components/creatorCoinHODLer.component';
@@ -26,8 +26,8 @@ interface Section {
 interface State {
     isLoading: boolean;
     publicKey: string;
-    bitCloutPriceUsd: string;
-    balanceBitClout: string;
+    deSoPriceUsd: string;
+    balanceDeSo: string;
     balanceUsd: string;
     creatorCoinsTotalValueUsd: string;
     selectedTab: WalletTab;
@@ -67,8 +67,8 @@ export class WalletScreen extends React.Component<Props, State> {
         this.state = {
             isLoading: true,
             publicKey: '',
-            bitCloutPriceUsd: '',
-            balanceBitClout: '',
+            deSoPriceUsd: '',
+            balanceDeSo: '',
             balanceUsd: '',
             creatorCoinsTotalValueUsd: '',
             selectedTab: WalletTab.Purchased,
@@ -124,10 +124,10 @@ export class WalletScreen extends React.Component<Props, State> {
         ).then(
             responses => {
                 const user: User = responses[1].UserList[0];
-                const bitCloutNanos = 1000000000.0;
-                const balanceBitClout = (user.BalanceNanos / bitCloutNanos).toFixed(9);
-                const bitCloutPriceUsd = calculateAndFormatBitCloutInUsd(bitCloutNanos);
-                const balanceUsd = calculateAndFormatBitCloutInUsd(user.BalanceNanos);
+                const deSoNanos = 1000000000.0;
+                const balanceDeSo = (user.BalanceNanos / deSoNanos).toFixed(9);
+                const deSoPriceUsd = calculateAndFormatDeSoInUsd(deSoNanos);
+                const balanceUsd = calculateAndFormatDeSoInUsd(user.BalanceNanos);
 
                 const usersYouHODL = user.UsersYouHODL;
 
@@ -138,11 +138,11 @@ export class WalletScreen extends React.Component<Props, State> {
                     for (let i = 0; i < usersYouHODL.length; i++) {
                         if (usersYouHODL[i].ProfileEntryResponse) {
                             const userYouHODL = usersYouHODL[i];
-                            const amountYouGetIfYouSold = this.bitCloutNanosYouWouldGetIfYouSold(
+                            const amountYouGetIfYouSold = this.deSoNanosYouWouldGetIfYouSold(
                                 userYouHODL.BalanceNanos,
                                 userYouHODL.ProfileEntryResponse.CoinEntry
                             );
-                            const amountUsd = calculateBitCloutInUSD(amountYouGetIfYouSold);
+                            const amountUsd = calculateDeSoInUSD(amountYouGetIfYouSold);
 
                             const coinsAmount = userYouHODL.BalanceNanos / 1000000000;
                             userYouHODL.ProfileEntryResponse.CoinPriceUSD = amountUsd / coinsAmount;
@@ -161,8 +161,8 @@ export class WalletScreen extends React.Component<Props, State> {
                     this.setState(
                         {
                             isLoading: false,
-                            bitCloutPriceUsd,
-                            balanceBitClout,
+                            deSoPriceUsd,
+                            balanceDeSo,
                             balanceUsd,
                             creatorCoinsTotalValueUsd: formatNumber(creatorCoinsTotalValueUsd),
                             usersYouHODL: usersYouHODL,
@@ -175,12 +175,12 @@ export class WalletScreen extends React.Component<Props, State> {
         );
     }
 
-    private bitCloutNanosYouWouldGetIfYouSold(creatorCoinAmountNano: number, coinEntry: CoinEntry): number {
-        const bitCloutLockedNanos = coinEntry.BitCloutLockedNanos;
+    private deSoNanosYouWouldGetIfYouSold(creatorCoinAmountNano: number, coinEntry: CoinEntry): number {
+        const deSoLockedNanos = coinEntry.DeSoLockedNanos;
         const currentCreatorCoinSupply = coinEntry.CoinsInCirculationNanos;
 
-        const bitCloutBeforeFeesNanos =
-            bitCloutLockedNanos *
+        const deSoBeforeFeesNanos =
+            deSoLockedNanos *
             (
                 1 -
                 Math.pow(
@@ -190,7 +190,7 @@ export class WalletScreen extends React.Component<Props, State> {
             );
 
         return (
-            (bitCloutBeforeFeesNanos * (100 * 100 - 1)) / (100 * 100)
+            (deSoBeforeFeesNanos * (100 * 100 - 1)) / (100 * 100)
         );
     }
 
@@ -256,20 +256,20 @@ export class WalletScreen extends React.Component<Props, State> {
 
     render() {
         const renderItem = () => <>
-            <View style={[styles.bitCloutPriceContainer]}>
-                <Text style={[styles.bitCloutPriceText, themeStyles.fontColorMain]}>$DESO Price</Text>
-                <Text style={[styles.bitCloutPriceText, themeStyles.fontColorMain]}>~${this.state.bitCloutPriceUsd}</Text>
+            <View style={[styles.deSoPriceContainer]}>
+                <Text style={[styles.deSoPriceText, themeStyles.fontColorMain]}>$DESO Price</Text>
+                <Text style={[styles.deSoPriceText, themeStyles.fontColorMain]}>~${this.state.deSoPriceUsd}</Text>
             </View>
 
             <View style={[styles.balanceContainer, themeStyles.containerColorSub]}>
                 <Text style={[styles.balanceText, themeStyles.fontColorSub]}>Balance</Text>
-                <Text style={[styles.balanceBitClout, themeStyles.fontColorMain]}>{this.state.balanceBitClout}</Text>
+                <Text style={[styles.balanceDeSo, themeStyles.fontColorMain]}>{this.state.balanceDeSo}</Text>
                 <Text style={[styles.balanceUsd, themeStyles.fontColorMain]}>≈ ${this.state.balanceUsd} USD Value</Text>
             </View>
 
             <View style={[styles.creatorCoinsContainer]}>
-                <Text style={[styles.bitCloutPriceText, themeStyles.fontColorMain]}>Creator Coins</Text>
-                <Text style={[styles.bitCloutPriceText, themeStyles.fontColorMain]}>~${this.state.creatorCoinsTotalValueUsd}</Text>
+                <Text style={[styles.deSoPriceText, themeStyles.fontColorMain]}>Creator Coins</Text>
+                <Text style={[styles.deSoPriceText, themeStyles.fontColorMain]}>~${this.state.creatorCoinsTotalValueUsd}</Text>
             </View>
         </>;
 
@@ -317,12 +317,12 @@ const styles = StyleSheet.create(
             flex: 1,
             width: '100%'
         },
-        bitCloutPriceContainer: {
+        deSoPriceContainer: {
             flexDirection: 'row',
             justifyContent: 'space-between',
             padding: 10
         },
-        bitCloutPriceText: {
+        deSoPriceText: {
             fontSize: 16,
             fontWeight: '600'
         },
@@ -335,7 +335,7 @@ const styles = StyleSheet.create(
             fontSize: 12,
             marginBottom: 4
         },
-        balanceBitClout: {
+        balanceDeSo: {
             fontSize: 30,
             fontWeight: '600'
         },

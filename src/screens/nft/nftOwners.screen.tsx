@@ -3,7 +3,7 @@ import { Text, StyleSheet, View, ScrollView, RefreshControl, FlatList, Touchable
 import { Post, Profile } from '@types';
 import { themeStyles } from '@styles/globalColors';
 import { globals } from '@globals/globals';
-import { calculateAndFormatBitCloutInUsd, nftApi } from '@services';
+import { calculateAndFormatDeSoInUsd, nftApi } from '@services';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -139,7 +139,7 @@ export default class NftOwnersScreen extends Component<Props, State> {
                         {this.calculateBidderBalance(item.LastAcceptedBidAmountNanos)}
                     </Text>
                     <Text style={[styles.coinPrice, themeStyles.fontColorMain]}>~$
-                        {calculateAndFormatBitCloutInUsd(item.LastAcceptedBidAmountNanos)}
+                        {calculateAndFormatDeSoInUsd(item.LastAcceptedBidAmountNanos)}
                     </Text>
                 </View>
             </TouchableOpacity>;

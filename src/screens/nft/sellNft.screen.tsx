@@ -6,7 +6,7 @@ import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.co
 import { Post } from '@types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { globals } from '@globals/globals';
 import { api, nftApi } from '@services';
 import { signing } from '@services/authorization/signing';
@@ -225,7 +225,7 @@ export default class SellNftScreen extends React.Component<Props, State> {
                     <Text style={[themeStyles.fontColorSub, styles.serialNumber]}>#{item.SerialNumber}</Text>
                 </View>
                 <Text style={[styles.balance, themeStyles.fontColorMain]}>{this.calculateBidderBalance(item.BidAmountNanos)}</Text>
-                <Text style={[styles.coinPrice, themeStyles.fontColorMain]}>~${calculateAndFormatBitCloutInUsd(item.BidAmountNanos)}</Text>
+                <Text style={[styles.coinPrice, themeStyles.fontColorMain]}>~${calculateAndFormatDeSoInUsd(item.BidAmountNanos)}</Text>
             </View>
         </View>;
 
@@ -237,28 +237,28 @@ export default class SellNftScreen extends React.Component<Props, State> {
                     <Text style={themeStyles.fontColorSub}>Selling Price</Text>
                     <Text style={themeStyles.fontColorSub}>
                         {this.calculateBidderBalance(this.state.sellingPriceCloutNanos)}
-                        {' '}DESO(~${calculateAndFormatBitCloutInUsd(this.state.sellingPriceCloutNanos)})
+                        {' '}DESO(~${calculateAndFormatDeSoInUsd(this.state.sellingPriceCloutNanos)})
                     </Text>
                 </View>
                 <View style={styles.textContainer}>
                     <Text style={themeStyles.fontColorSub}>Earnings</Text>
                     <Text style={themeStyles.fontColorSub}>
                         {this.calculateBidderBalance(this.state.earningsCloutNanos)}
-                        {' '}DESO(~${calculateAndFormatBitCloutInUsd(this.state.earningsCloutNanos)})
+                        {' '}DESO(~${calculateAndFormatDeSoInUsd(this.state.earningsCloutNanos)})
                     </Text>
                 </View>
                 <View style={styles.textContainer}>
                     <Text style={themeStyles.fontColorSub}>Creator royalty</Text>
                     <Text style={themeStyles.fontColorSub}>
                         {this.calculateBidderBalance(this.state.creatorRoyaltyCloutNanos)}
-                        {' '}DESO(~${calculateAndFormatBitCloutInUsd(this.state.creatorRoyaltyCloutNanos)})
+                        {' '}DESO(~${calculateAndFormatDeSoInUsd(this.state.creatorRoyaltyCloutNanos)})
                     </Text>
                 </View>
                 <View style={styles.textContainer}>
                     <Text style={themeStyles.fontColorSub}>Coin-holder royalty</Text>
                     <Text style={themeStyles.fontColorSub}>
                         {this.calculateBidderBalance(this.state.coinHolderRoyaltyCloutNanos)}
-                        {' '}DESO(~${calculateAndFormatBitCloutInUsd(this.state.coinHolderRoyaltyCloutNanos)})
+                        {' '}DESO(~${calculateAndFormatDeSoInUsd(this.state.coinHolderRoyaltyCloutNanos)})
                     </Text>
                 </View>
             </View>

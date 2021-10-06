@@ -1,7 +1,7 @@
 import { themeStyles } from '@styles/globalColors';
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { calculateBitCloutInUSD } from '@services';
+import { calculateDeSoInUSD } from '@services';
 import { Profile, Notification } from '@types';
 import { globalStyles } from '@styles/globalStyles';
 import { FontAwesome } from '@expo/vector-icons';
@@ -28,8 +28,8 @@ export class CreatorCoinNotificationComponent extends React.Component<Props> {
     }
 
     render() {
-        const bitClout = this.props.notification.Metadata.CreatorCoinTxindexMetadata?.BitCloutToSellNanos as number;
-        const usd = calculateBitCloutInUSD(bitClout);
+        const deSo = this.props.notification.Metadata.CreatorCoinTxindexMetadata?.DeSoToSellNanos as number;
+        const usd = calculateDeSoInUSD(deSo);
         return (
             <TouchableOpacity
                 style={[notificationsStyles.notificationContainer, notificationsStyles.centerTextVertically, themeStyles.containerColorMain, themeStyles.borderColor]}

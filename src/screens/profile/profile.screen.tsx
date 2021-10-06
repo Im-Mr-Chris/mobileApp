@@ -5,7 +5,7 @@ import { CreatorCoinHODLerComponent } from '@components/creatorCoinHODLer.compon
 import { ProfileNotCompletedComponent } from '@components/profileNotCompleted.component';
 import { TabConfig, TabsComponent } from '@components/tabs.component';
 import { globals, navigatorGlobals } from '@globals';
-import { api, cache, calculateBitCloutInUSD } from '@services';
+import { api, cache, calculateDeSoInUSD } from '@services';
 import { CreatorCoinHODLer, DiamondSender, Post, Profile } from '@types';
 import { ProfileStats } from './profileStats.component';
 import { themeStyles } from '@styles/globalColors';
@@ -189,7 +189,7 @@ export function ProfileScreen({ route }: Route): JSX.Element {
         const newProfile = response.Profile as Profile;
 
         if (newProfile) {
-            const calculatedCoinPrice = calculateBitCloutInUSD(newProfile.CoinPriceBitCloutNanos);
+            const calculatedCoinPrice = calculateDeSoInUSD(newProfile.CoinPriceDeSoNanos);
             newProfile.ProfilePic = api.getSingleProfileImage(newProfile.PublicKeyBase58Check + '?' + new Date().toISOString());
 
             if (isMounted) {
@@ -457,7 +457,7 @@ export function ProfileScreen({ route }: Route): JSX.Element {
             Username: profile.Username,
             Description: profile.Description,
             PublicKeyBase58Check: profile.PublicKeyBase58Check,
-            CoinPriceBitCloutNanos: profile.CoinPriceBitCloutNanos,
+            CoinPriceDeSoNanos: profile.CoinPriceDeSoNanos,
             CoinEntry: profile.CoinEntry,
             IsVerified: profile.IsVerified,
             Posts: []

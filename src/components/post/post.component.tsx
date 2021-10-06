@@ -6,7 +6,7 @@ import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { ImageGalleryComponent } from '../imageGallery.component';
 import { TextWithLinks } from '../textWithLinks.component';
 import { globals, hapticsManager } from '@globals';
-import { calculateAndFormatBitCloutInUsd, calculateDurationUntilNow } from '@services';
+import { calculateAndFormatDeSoInUsd, calculateDurationUntilNow } from '@services';
 import { themeStyles } from '@styles';
 import { PostOptionsComponent } from './postOptions.components';
 import { PostActionsRow } from './postActionsRow.component';
@@ -51,7 +51,7 @@ export class PostComponent extends React.Component<Props, State> {
     constructor(p_props: Props) {
         super(p_props);
 
-        const coinPrice = calculateAndFormatBitCloutInUsd(this.props.post.ProfileEntryResponse.CoinPriceBitCloutNanos);
+        const coinPrice = calculateAndFormatDeSoInUsd(this.props.post.ProfileEntryResponse.CoinPriceDeSoNanos);
         const durationUntilNow = calculateDurationUntilNow(this.props.post.TimestampNanos);
 
         this.state = {

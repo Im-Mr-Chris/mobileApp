@@ -4,7 +4,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { Profile, Notification, Post } from '@types';
 import { globalStyles } from '@styles/globalStyles';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { globals } from '@globals/globals';
 import ProfileInfoImageComponent from '@components/profileInfo/profileInfoImage.component';
 import ProfileInfoUsernameComponent from '@components/profileInfo/profileInfoUsername.component';
@@ -70,12 +70,12 @@ export class BasicTransferNotificationComponent extends React.Component<Props> {
             p_output => p_output.PublicKeyBase58Check === globals.user.publicKey
         );
 
-        let bitCloutAmount = '';
+        let deSoAmount = '';
         let usdAmount = '';
 
         if (output) {
-            bitCloutAmount = (output.AmountNanos / 1000000000).toFixed(2);
-            usdAmount = calculateAndFormatBitCloutInUsd(output.AmountNanos);
+            deSoAmount = (output.AmountNanos / 1000000000).toFixed(2);
+            usdAmount = calculateAndFormatDeSoInUsd(output.AmountNanos);
         }
 
         return (
@@ -97,7 +97,7 @@ export class BasicTransferNotificationComponent extends React.Component<Props> {
                         profile={this.props.profile}
                     />
                     <Text style={[globalStyles.fontWeight500, themeStyles.fontColorMain]}> sent you</Text>
-                    <Text style={[notificationsStyles.usernameText, themeStyles.fontColorMain]}> {bitCloutAmount} </Text>
+                    <Text style={[notificationsStyles.usernameText, themeStyles.fontColorMain]}> {deSoAmount} </Text>
                     <Text style={[globalStyles.fontWeight500, themeStyles.fontColorMain]}>DESO!</Text>
                     <Text style={[notificationsStyles.usernameText, themeStyles.fontColorMain]}> (~${usdAmount})</Text>
                 </View>

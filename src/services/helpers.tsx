@@ -26,7 +26,7 @@ export function getAnonymousProfile(p_publicKey: string) {
         PublicKeyBase58Check: p_publicKey,
         Description: '',
         ProfilePic: 'https://i.imgur.com/vZ2mB1W.png',
-        CoinPriceBitCloutNanos: 0,
+        CoinPriceDeSoNanos: 0,
     } as Profile;
 
     return profile;

@@ -8,7 +8,7 @@ export const globals = {
     onLoginSuccess: () => { },
     onLogout: (p_jwt?: string) => { },
     createPost: () => { },
-    exchangeRate: { SatoshisPerBitCloutExchangeRate: 0, USDCentsPerBitCloutExchangeRate: 0 },
+    exchangeRate: { SatoshisPerDeSoExchangeRate: 0, USDCentsPerDeSoExchangeRate: 0 },
     investorFeatures: false,
     followerFeatures: false,
     setGlobalTheme: (p_theme: string) => { },

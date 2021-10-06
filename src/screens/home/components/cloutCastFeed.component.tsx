@@ -133,7 +133,7 @@ export class CloutCastFeedComponent extends React.Component<Props, State>{
                         sort
                     }
                 );
-                const coinPrice = responses[0].ProfileEntryResponse?.CoinPriceBitCloutNanos;
+                const coinPrice = responses[0].ProfileEntryResponse?.CoinPriceDeSoNanos;
                 const followersCount = responses[1].NumFollowers;
                 const promotions: CloutCastPromotion[] = responses[2].data;
                 this._allPromotions = this.preProcessPromotions(promotions, filter, sort, coinPrice, followersCount);

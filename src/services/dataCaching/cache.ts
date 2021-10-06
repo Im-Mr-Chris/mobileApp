@@ -49,7 +49,7 @@ const removeFollower = async (p_publicKey: string) => {
     }
 };
 
-const exchangeRate = new CacheableObject<{ SatoshisPerBitCloutExchangeRate: number, USDCentsPerBitCloutExchangeRate: number }>(
+const exchangeRate = new CacheableObject<{ SatoshisPerDeSoExchangeRate: number, USDCentsPerDeSoExchangeRate: number }>(
     () => api.getExchangeRate(),
     p_response => {
         globals.exchangeRate = p_response;
@@ -64,7 +64,7 @@ interface Cache {
     removeFollower: (publicKey: string) => void;
     savedPosts: SavedPostsCache;
     pinnedPost: CacheableObject<{ postHashHex: string }>;
-    exchangeRate: CacheableObject<{ SatoshisPerBitCloutExchangeRate: number, USDCentsPerBitCloutExchangeRate: number }>;
+    exchangeRate: CacheableObject<{ SatoshisPerDeSoExchangeRate: number, USDCentsPerDeSoExchangeRate: number }>;
 }
 
 export let cache: Cache;

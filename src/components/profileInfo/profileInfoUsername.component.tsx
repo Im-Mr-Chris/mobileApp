@@ -6,7 +6,7 @@ import { EventType, Profile } from '@types';
 import { eventManager, hapticsManager } from '@globals/injector';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
-import { calculateBitCloutInUSD } from '@services/bitCloutCalculator';
+import { calculateDeSoInUSD } from '@services/deSoCalculator';
 
 interface Props {
     profile: Profile;
@@ -56,7 +56,7 @@ export default class ProfileInfoUsernameComponent extends React.Component<Props>
             {
                 visible: true,
                 profile: this.props.profile,
-                coinPrice: calculateBitCloutInUSD(this.props.profile?.CoinPriceBitCloutNanos),
+                coinPrice: calculateDeSoInUSD(this.props.profile?.CoinPriceDeSoNanos),
                 navigation: this.props.navigation
             }
         );

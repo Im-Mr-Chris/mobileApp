@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, StyleSheet, Text, Dimensions } from 'react-native';
 import { VictoryPie } from 'victory-native';
 import { PostStatsCard } from '@components/postStatsCard.components';
-import { calculateBitCloutInUSD, formatNumber, isNumber } from '@services';
+import { calculateDeSoInUSD, formatNumber, isNumber } from '@services';
 import { Post, Profile } from '@types';
 import { themeStyles } from '@styles';
 
@@ -61,7 +61,7 @@ export function ProfileStats(
 
         if (mount) {
             const stats: Stats = {} as Stats;
-            stats.coinPrice = calculateBitCloutInUSD(profile.CoinPriceBitCloutNanos);
+            stats.coinPrice = calculateDeSoInUSD(profile.CoinPriceDeSoNanos);
             calculatePostsStats(postsData, stats);
             calculateAvgCoinPricePerFollower(stats);
             calculateAvgCoinPricePerHODLer(stats);
@@ -124,8 +124,8 @@ export function ProfileStats(
 
             for (let i = 0; i < followers.length; i++) {
                 const follower = followers[i];
-                if (follower && isNumber(follower.CoinPriceBitCloutNanos)) {
-                    const followerCoinPriceInUSD = calculateBitCloutInUSD(follower.CoinPriceBitCloutNanos);
+                if (follower && isNumber(follower.CoinPriceDeSoNanos)) {
+                    const followerCoinPriceInUSD = calculateDeSoInUSD(follower.CoinPriceDeSoNanos);
                     followersCoinPriceSum += followerCoinPriceInUSD;
                 }
             }
@@ -146,8 +146,8 @@ export function ProfileStats(
 
             for (let i = 0; i < usersWhoHODL.length; i++) {
                 const hodler = usersWhoHODL[i];
-                if (hodler?.ProfileEntryResponse && isNumber(hodler.ProfileEntryResponse.CoinPriceBitCloutNanos)) {
-                    const hodlerCoinPriceInUSD = calculateBitCloutInUSD(hodler.ProfileEntryResponse.CoinPriceBitCloutNanos);
+                if (hodler?.ProfileEntryResponse && isNumber(hodler.ProfileEntryResponse.CoinPriceDeSoNanos)) {
+                    const hodlerCoinPriceInUSD = calculateDeSoInUSD(hodler.ProfileEntryResponse.CoinPriceDeSoNanos);
                     hodlersCoinPriceSum += hodlerCoinPriceInUSD;
                 }
             }

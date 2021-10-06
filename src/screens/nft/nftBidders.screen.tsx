@@ -5,7 +5,7 @@ import { themeStyles } from '@styles/globalColors';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
 import { Profile } from '@types';
-import { nftApi, calculateAndFormatBitCloutInUsd, api, snackbar } from '@services';
+import { nftApi, calculateAndFormatDeSoInUsd, api, snackbar } from '@services';
 import { globals } from '@globals/globals';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
@@ -303,7 +303,7 @@ export default class NFTBiddersScreen extends React.Component<Props, State> {
                         {this.calculateBidderBalance(item.BidAmountNanos)}
                     </Text>
                     <Text style={[styles.coinPrice, themeStyles.fontColorMain]}>
-                        ~${calculateAndFormatBitCloutInUsd(item.BidAmountNanos)}
+                        ~${calculateAndFormatDeSoInUsd(item.BidAmountNanos)}
                     </Text>
                 </View>
             </TouchableOpacity>;

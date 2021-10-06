@@ -4,7 +4,7 @@ import { Text, StyleSheet, View, ScrollView, TouchableOpacity, TextInput, Switch
 import { Ionicons } from '@expo/vector-icons';
 import { globals } from '@globals/globals';
 import { settingsGlobals } from '@globals/settingsGlobals';
-import { api, calculateAndFormatBitCloutInUsd, nftApi } from '@services';
+import { api, calculateAndFormatDeSoInUsd, nftApi } from '@services';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { signing } from '@services/authorization/signing';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -130,7 +130,7 @@ export default class MintPostScreen extends React.Component<Props, State> {
 
     private setCloutAmount(clout: string): void {
         const parsedClout = Number(clout.split(',').join('.'));
-        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerBitCloutExchangeRate) / 100).toFixed(2);
+        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerDeSoExchangeRate) / 100).toFixed(2);
         if (this._isMounted && !isNaN(parsedClout)) {
             this.setState({ clout, usd });
         }
@@ -138,7 +138,7 @@ export default class MintPostScreen extends React.Component<Props, State> {
 
     private setUsdAmount(usd: string): void {
         const parsedUsd = Number(usd.split(',').join('.'));
-        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerBitCloutExchangeRate).toFixed(4);
+        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerDeSoExchangeRate).toFixed(4);
         if (this._isMounted && !isNaN(parsedUsd)) {
             this.setState({ usd, clout });
         }
@@ -416,7 +416,7 @@ export default class MintPostScreen extends React.Component<Props, State> {
 
                 <View style={styles.row}>
                     <Text style={[styles.label, themeStyles.fontColorMain]}>Network Fee</Text>
-                    <Text style={themeStyles.fontColorSub}>{this.state.networkFee} DESO (~${calculateAndFormatBitCloutInUsd(this.state.networkFee)})</Text>
+                    <Text style={themeStyles.fontColorSub}>{this.state.networkFee} DESO (~${calculateAndFormatDeSoInUsd(this.state.networkFee)})</Text>
                 </View>
 
                 <TouchableOpacity

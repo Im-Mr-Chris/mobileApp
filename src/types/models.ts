@@ -3,7 +3,7 @@ export interface User {
 }
 
 export interface CoinEntry {
-    BitCloutLockedNanos: number
+    DeSoLockedNanos: number
     CoinWatermarkNanos: number;
     CoinsInCirculationNanos: number;
     CreatorBasisPoints: number;
@@ -27,7 +27,7 @@ export interface Profile {
     Username: string;
     Description: string;
     PublicKeyBase58Check: string;
-    CoinPriceBitCloutNanos: number;
+    CoinPriceDeSoNanos: number;
     CoinEntry: CoinEntry;
     IsVerified: boolean;
     CoinPriceUSD?: number;
@@ -113,8 +113,8 @@ export interface NotificationSubmitPostMetaData {
 }
 
 export interface NotificationCreatorCoinMetaData {
-    BitCloutToAddNanos: number;
-    BitCloutToSellNanos: number;
+    DeSoToAddNanos: number;
+    DeSoToSellNanos: number;
     CreatorCoinToSellNanos: number;
     OperationType: string;
 }

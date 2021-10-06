@@ -5,7 +5,7 @@ import { ParamListBase } from '@react-navigation/native';
 import { EventType, Post } from '@types';
 import { globals } from '@globals/globals';
 import { diamondAnimation } from '@services/diamondAnimation';
-import { api, calculateAndFormatBitCloutInUsd } from '@services';
+import { api, calculateAndFormatDeSoInUsd } from '@services';
 import { signing } from '@services/authorization/signing';
 import { themeStyles } from '@styles/globalColors';
 import { eventManager, hapticsManager } from '@globals/injector';
@@ -130,7 +130,7 @@ export class PostActionsRow extends React.Component<Props, State> {
         } else {
             const calculateDiamondsWorth = (count: number): string => {
                 const nanos = 5000 * Math.pow(10, count);
-                const usd = calculateAndFormatBitCloutInUsd(nanos);
+                const usd = calculateAndFormatDeSoInUsd(nanos);
                 return '💎 ' + String(count) + ' ($' + usd + ')';
             };
 

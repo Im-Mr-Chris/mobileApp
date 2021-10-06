@@ -218,7 +218,7 @@ export default class ProfileInfoModalComponent extends React.Component<Props, St
             Username: profile.Username,
             Description: profile.Description,
             PublicKeyBase58Check: profile.PublicKeyBase58Check,
-            CoinPriceBitCloutNanos: profile.CoinPriceBitCloutNanos,
+            CoinPriceDeSoNanos: profile.CoinPriceDeSoNanos,
             CoinEntry: profile.CoinEntry,
             IsVerified: profile.IsVerified,
             Posts: []

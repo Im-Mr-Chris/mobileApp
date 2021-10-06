@@ -1,5 +1,5 @@
 import { globals } from '@globals/globals';
-import { api, cache, calculateBitCloutInUSD, formatNumber, nftApi, snackbar } from '@services';
+import { api, cache, calculateDeSoInUSD, formatNumber, nftApi, snackbar } from '@services';
 import { themeStyles } from '@styles/globalColors';
 import React from 'react';
 import { ActivityIndicator, Alert, FlatList, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -267,7 +267,7 @@ export default class AuctionStatusScreen extends React.Component<Props, State> {
     private setCloutAmount(clout: string): void {
         const parsedClout = Number(clout.split(',').join('.'));
 
-        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerBitCloutExchangeRate) / 100).toFixed(2);
+        const usd = ((parsedClout * globals.exchangeRate.USDCentsPerDeSoExchangeRate) / 100).toFixed(2);
         if (this._isMounted && !isNaN(parsedClout)) {
             this.setState({ clout, usd });
         }
@@ -275,7 +275,7 @@ export default class AuctionStatusScreen extends React.Component<Props, State> {
 
     private setUsdAmount(usd: string): void {
         const parsedUsd = Number(usd.split(',').join('.'));
-        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerBitCloutExchangeRate).toFixed(4);
+        const clout = ((parsedUsd * 100) / globals.exchangeRate.USDCentsPerDeSoExchangeRate).toFixed(4);
         if (this._isMounted && !isNaN(parsedUsd)) {
             this.setState({ usd, clout: clout });
         }
@@ -358,7 +358,7 @@ export default class AuctionStatusScreen extends React.Component<Props, State> {
                 </View>
                 <Text style={themeStyles.fontColorMain}>
                     {formatNumber(item.MinBidAmountNanos / 1000000000, true, 3)} DESO
-                    <Text style={themeStyles.fontColorSub}> (~${formatNumber(calculateBitCloutInUSD(item.MinBidAmountNanos), true)})</Text>
+                    <Text style={themeStyles.fontColorSub}> (~${formatNumber(calculateDeSoInUSD(item.MinBidAmountNanos), true)})</Text>
                 </Text>
             </TouchableOpacity>
         </>;

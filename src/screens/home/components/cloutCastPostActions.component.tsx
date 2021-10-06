@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, TouchableOpacity, Text, Alert } from 'react-native';
 import { CloutCastAction, CloutCastPromotion } from '@types';
 import { themeStyles } from '@styles/globalColors';
-import { calculateAndFormatBitCloutInUsd } from '@services/bitCloutCalculator';
+import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
 import { globals } from '@globals/globals';
 import { signing } from '@services/authorization/signing';
 import { cloutCastApi } from '@services';
@@ -101,10 +101,10 @@ export class CloutCastPostActionsComponent extends React.Component<Props, State>
             await cloutCastApi.proofOfWork(this.props.promotion.id, globals.user.publicKey, jwt, globals.cloutCastToken);
             this.props.promotion.alreadyPromoted = true;
             const rate = this.props.promotion.header.rate;
-            const formattedRate = calculateAndFormatBitCloutInUsd(rate);
+            const formattedRate = calculateAndFormatDeSoInUsd(rate);
 
             Alert.alert('Verification Success', `The amount $${formattedRate} was transferred to your CloutCast wallet.`);
-        } catch (p_exception) {
+        } catch (p_exception: any) {
             let errorMessage = 'Something went wrong';
 
             const error = p_exception.json;
@@ -138,7 +138,7 @@ export class CloutCastPostActionsComponent extends React.Component<Props, State>
         const action = this.props.promotion.target.action;
 
         const rate = this.props.promotion.header.rate;
-        const formattedRate = calculateAndFormatBitCloutInUsd(rate);
+        const formattedRate = calculateAndFormatDeSoInUsd(rate);
 
         return <View style={styles.container}>
             <TouchableOpacity

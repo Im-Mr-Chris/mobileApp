@@ -73,7 +73,7 @@ export default class ProfileFollowers extends React.Component<Props, State> {
         }
 
         profiles.sort(
-            (p_profile1, p_profile2) => p_profile2.CoinEntry.BitCloutLockedNanos - p_profile1.CoinEntry.BitCloutLockedNanos
+            (p_profile1, p_profile2) => p_profile2.CoinEntry.DeSoLockedNanos - p_profile1.CoinEntry.DeSoLockedNanos
         );
         return profiles;
     }

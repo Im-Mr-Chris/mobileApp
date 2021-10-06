@@ -3,7 +3,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { TouchableOpacity, View, Text, StyleSheet, Dimensions } from 'react-native';
 import { DiamondSender } from '@types';
 import { themeStyles } from '@styles';
-import { calculateAndFormatBitCloutInUsd, getAnonymousProfile } from '@services';
+import { calculateAndFormatDeSoInUsd, getAnonymousProfile } from '@services';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
@@ -26,8 +26,8 @@ export class DiamondSenderComponent extends React.Component<Props, State> {
             this.props.diamondSender.ProfileEntryResponse = getAnonymousProfile(this.props.diamondSender.SenderPublicKeyBase58Check);
         }
 
-        const diamondSenderCoinPriceUSD = calculateAndFormatBitCloutInUsd(
-            this.props.diamondSender.ProfileEntryResponse.CoinPriceBitCloutNanos
+        const diamondSenderCoinPriceUSD = calculateAndFormatDeSoInUsd(
+            this.props.diamondSender.ProfileEntryResponse.CoinPriceDeSoNanos
         );
 
         this.state = {

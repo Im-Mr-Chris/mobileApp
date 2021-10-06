@@ -45,7 +45,7 @@ function mnemonicToKeychain(mnemonic: string, extraText?: string, nonStandard?: 
     return HDKey.fromMasterSeed(seed).derive("m/44'/0'/0'/0/0", nonStandard);
 }
 
-function privateKeyToBitCloutPublicKey(privateKey: any) {
+function privateKeyToDeSoPublicKey(privateKey: any) {
     const prefix = [0xcd, 0x14, 0x0];
     const key = privateKey.getPublic().encode('array', true);
     const prefixAndKey = Uint8Array.from([...prefix, ...key]);
@@ -77,7 +77,7 @@ export const crypto = {
     keychainToSeedHex,
     seedHexToPrivateKey,
     uintToBuf,
-    privateKeyToBitCloutPublicKey,
+    privateKeyToDeSoPublicKey,
     mnemonicToSeedHex,
     aesEncrypt: (counter: Buffer, key: Buffer, data: Buffer): string => ecies.aesCtrEncrypt(counter, key, data),
     aesDecrypt: (counter: Buffer, key: Buffer, data: Buffer): string => ecies.aesCtrDecrypt(counter, key, data),
