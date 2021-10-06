@@ -43,7 +43,7 @@ export class PostComponent extends React.Component<Props, State> {
 
     private _outputRange = [0, 1.3];
 
-    private scale = this._animation.interpolate({
+    private _scale = this._animation.interpolate({
         inputRange: this._inputRange,
         outputRange: this._outputRange
     });
@@ -74,6 +74,19 @@ export class PostComponent extends React.Component<Props, State> {
             }
 
             this.props.post.ImageURLs = imageUrls;
+        }
+
+        if (this.props.post.VideoURLs?.length > 0) {
+            const videoUrls: string[] = [];
+
+            for (const videoUrl of this.props.post.VideoURLs) {
+                const regExp = /^https:\/\/iframe\.videodelivery\.net\/[A-Za-z0-9]+$/;
+                const match = videoUrl.match(regExp);
+                if (match && match[0]) {
+                    videoUrls.push(videoUrl);
+                }
+            }
+            this.props.post.VideoURLs = videoUrls;
         }
 
         this.goToStats = this.goToStats.bind(this);
@@ -267,6 +280,11 @@ export class PostComponent extends React.Component<Props, State> {
                         }
 
                         {
+                            this.props.post.VideoURLs?.length > 0 &&
+                            <CloutFeedVideoComponent embeddedVideoLink={this.props.post.VideoURLs[0]} />
+                        }
+
+                        {
                             this.props.post.PostExtraData?.EmbedVideoURL &&
                             <CloutFeedVideoComponent embeddedVideoLink={this.props.post.PostExtraData?.EmbedVideoURL} />
                         }
@@ -309,7 +327,7 @@ export class PostComponent extends React.Component<Props, State> {
 
                 {
                     this.state.isHeartShowed &&
-                    <Animated.View style={[styles.floatingHeart, { transform: [{ scale: this.scale }] }]} >
+                    <Animated.View style={[styles.floatingHeart, { transform: [{ scale: this._scale }] }]} >
                         <Ionicons
                             name={'ios-heart-sharp'}
                             size={75}

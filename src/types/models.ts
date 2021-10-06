@@ -51,6 +51,7 @@ export interface Post {
     PostHashHex: string;
     Body: string;
     ImageURLs: string[];
+    VideoURLs: string[];
     TimestampNanos: number;
     ProfileEntryResponse: Profile;
     LikeCount: number;

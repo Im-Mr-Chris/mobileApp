@@ -96,6 +96,14 @@ export function parseVideoLink(p_videoLink: string) {
         return videoLink;
     }
 
+    // native video
+    const nativeRegExp = /^https:\/\/iframe\.videodelivery\.net\/[A-Za-z0-9]+$/;
+    const nativeMatch = p_videoLink.match(nativeRegExp);
+
+    if (nativeMatch && nativeMatch[0]) {
+        return p_videoLink;
+    }
+
     return undefined;
 }
 
