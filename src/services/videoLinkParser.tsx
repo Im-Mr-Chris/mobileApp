@@ -29,7 +29,7 @@ export async function parseVideoLinkAsync(p_videoLink: string) {
     return undefined;
 }
 
-export function parseVideoLink(p_videoLink: string) {
+export function parseVideoLink(p_videoLink: string): { videoLink: string, type: 'youtube' | 'others' } | undefined {
 
     if (!p_videoLink) {
         return undefined;
@@ -41,7 +41,7 @@ export function parseVideoLink(p_videoLink: string) {
     if (youtubeMatch && youtubeMatch[7].length == 11) {
         const videoId = youtubeMatch[7];
         const videoLink = 'https://www.youtube.com/embed/' + videoId;
-        return videoLink;
+        return { videoLink, type: 'youtube' };
     }
 
     // vimeo
@@ -51,14 +51,14 @@ export function parseVideoLink(p_videoLink: string) {
     if (vimeoMatch && vimeoMatch.length > 7) {
         const videoId = vimeoMatch[7];
         const videoLink = 'https://player.vimeo.com/video/' + videoId;
-        return videoLink;
+        return { videoLink, type: 'others' };
     }
 
     // tiktok
     const tikTokVideoId = extractTikTokVideoId(p_videoLink);
     if (tikTokVideoId != null) {
         const videoLink = 'https://www.tiktok.com/embed/v2/' + tikTokVideoId;
-        return videoLink;
+        return { videoLink, type: 'others' };
     }
 
     // spotify
@@ -68,11 +68,11 @@ export function parseVideoLink(p_videoLink: string) {
         let videoLink = 'https://open.spotify.com/';
         if (spotifyMatch[8]) {
             videoLink += `embed-podcast/${spotifyMatch[8]}/${spotifyMatch[9]}`;
-            return videoLink;
+            return { videoLink, type: 'others' };
         }
         if (spotifyMatch[5]) {
             videoLink += `embed/${spotifyMatch[5]}/${spotifyMatch[9]}`;
-            return videoLink;
+            return { videoLink, type: 'others' };
         }
     }
 
@@ -83,7 +83,7 @@ export function parseVideoLink(p_videoLink: string) {
     if (soundCloudMatch && soundCloudMatch.length > 1) {
         const videoId = soundCloudMatch[1];
         const videoLink = `https://w.soundcloud.com/player/?url=https://${videoId}?hide_related=true&show_comments=false`;
-        return videoLink;
+        return { videoLink, type: 'others' };
     }
 
     // giphy
@@ -93,7 +93,7 @@ export function parseVideoLink(p_videoLink: string) {
     if (giphyMatch && giphyMatch.length > 5) {
         const videoId = giphyMatch[5];
         const videoLink = 'https://giphy.com/embed/' + videoId;
-        return videoLink;
+        return { videoLink, type: 'others' };
     }
 
     // native video
@@ -101,7 +101,7 @@ export function parseVideoLink(p_videoLink: string) {
     const nativeMatch = p_videoLink.match(nativeRegExp);
 
     if (nativeMatch && nativeMatch[0]) {
-        return p_videoLink;
+        return { videoLink: p_videoLink, type: 'others' };
     }
 
     return undefined;
