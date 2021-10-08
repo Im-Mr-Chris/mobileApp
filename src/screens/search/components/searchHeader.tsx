@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Dimensions, StyleSheet, TextInput, View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { themeStyles } from '@styles';
@@ -7,6 +7,7 @@ import { EventType, FocusSearchHeaderEvent } from '@types';
 
 export function SearchHeaderComponent() {
     const textInput = useRef<TextInput>(null);
+    const [searchValue, setSearchValue] = useState<string>('');
 
     function changeInputState(focused: boolean) {
         const event: FocusSearchHeaderEvent = {
@@ -17,6 +18,7 @@ export function SearchHeaderComponent() {
 
         if (!focused) {
             textInput?.current?.blur();
+            setSearchValue('');
         }
     }
 
@@ -26,7 +28,8 @@ export function SearchHeaderComponent() {
             <TextInput
                 ref={textInput}
                 style={[styles.textInput, themeStyles.fontColorMain]}
-                onChangeText={(p_text) => navigatorGlobals.searchResults(p_text)}
+                onChangeText={(p_text) => { navigatorGlobals.searchResults(p_text); setSearchValue(p_text); }}
+                value={searchValue}
                 blurOnSubmit={true}
                 maxLength={50}
                 placeholder={'Search'}

@@ -47,10 +47,6 @@ export class CreatorsSearchScreen extends React.Component<Props, State> {
             'focus',
             () => {
                 this.setSearchMethod();
-
-                if (this._leaderBoard.length && this._isMounted) {
-                    this.setState({ profiles: this._leaderBoard });
-                }
             }
         );
     }

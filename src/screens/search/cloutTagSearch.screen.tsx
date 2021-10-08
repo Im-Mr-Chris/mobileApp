@@ -47,10 +47,6 @@ export default class CloutTagSearchScreen extends React.Component<Props, State> 
             'focus',
             () => {
                 this.setSearchMethod();
-
-                if (this._topCloutTags.length && this._isMounted) {
-                    this.setState({ cloutTags: this._topCloutTags });
-                }
             }
         );
     }

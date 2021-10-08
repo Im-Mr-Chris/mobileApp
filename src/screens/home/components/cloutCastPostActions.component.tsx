@@ -110,6 +110,8 @@ export class CloutCastPostActionsComponent extends React.Component<Props, State>
             const error = p_exception.json;
             if (error?.error?.reasons?.length > 0) {
                 errorMessage = error.error.reasons[0];
+            } else if (error?.error?.message?.length > 0) {
+                errorMessage = error?.error?.message;
             }
 
             Alert.alert('Verification Failure', errorMessage);
