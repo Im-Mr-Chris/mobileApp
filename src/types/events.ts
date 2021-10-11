@@ -19,7 +19,8 @@ export enum EventType {
     FocusSearchHeader = 13,
     ToggleBidForm = 14,
     ToggleSetSelectedNfts = 15,
-    BroadcastMessage = 16
+    BroadcastMessage = 16,
+    ToggleHideNFTs = 17
 }
 
 export interface ChangeFollowersEvent {
@@ -38,6 +39,10 @@ export interface ToggleProfileManagerEvent {
 
 export interface ToggleCloutCastFeedEvent {
     active: boolean;
+}
+
+export interface ToggleHideNFTsEvent {
+    hidden: boolean;
 }
 
 export interface FocusSearchHeaderEvent {
