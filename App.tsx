@@ -1,4 +1,4 @@
-import { NavigationContainer, NavigationProp, ParamListBase } from '@react-navigation/native';
+import { NavigationContainer, NavigationProp, ParamListBase, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useState, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
@@ -324,6 +324,13 @@ export default function App(): JSX.Element {
     updateThemeStyles();
   }
 
+  const handleTheme = () => {
+    if (!globals.user.publicKey || settingsGlobals.darkMode) {
+      return DarkTheme;
+    }
+    return DefaultTheme;
+  };
+
   return <View style={[{ flex: 1 }, themeStyles.containerColorMain]}>
     {
       settingsGlobals.darkMode ?
@@ -336,7 +343,7 @@ export default function App(): JSX.Element {
       isLoading ?
         isThemeSet ? <CloutFeedLoader /> : <></>
         :
-        <NavigationContainer>
+        <NavigationContainer theme={handleTheme()}>
           <Stack.Navigator
             screenOptions={stackConfig}>
             {
