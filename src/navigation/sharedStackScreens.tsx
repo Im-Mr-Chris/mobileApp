@@ -91,6 +91,10 @@ export const SharedStackScreens = [
                 headerTitle: route.params.newPost ? 'New Post' : route.params.comment ? 'New Comment' :
                     route.params.editPost ? 'Edit Post' : 'Reclout Post',
                 headerBackTitle: 'Cancel',
+                headerTitleStyle: {
+                    alignSelf: 'center',
+                    color: themeStyles.fontColorMain.color
+                },
                 headerRight: () => <CloutFeedButton
                     title={'Post'}
                     onPress={() => globals.createPost()}
@@ -140,7 +144,7 @@ export const SharedStackScreens = [
     {
         options: {
             headerStyle: styles.identityHeader,
-            headerTitleStyle: { color: 'white', fontSize: 20 }
+            headerTitleStyle: { color: 'white', fontSize: 20, alignSelf: 'center', marginRight: Platform.OS === 'ios' ? 0 : 50 }
         },
         name: 'Identity',
         component: IdentityScreen
