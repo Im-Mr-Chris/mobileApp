@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, View, Text, StyleSheet, Linking, Image, TouchableOpacity, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { PostComponent } from '@components/post/post.component';
-import { Post } from '@types';
+import { HotFeedFilter, Post } from '@types';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { themeStyles } from '@styles/globalColors';
 import { globals } from '@globals/globals';
@@ -9,7 +9,7 @@ import { api, cache, searchCloutApi } from '@services';
 import { navigatorGlobals } from '@globals/navigatorGlobals';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { Ionicons } from '@expo/vector-icons';
-import { HotFeedFilter, HotFeedSettingsComponent } from './hotFeedSettings.component';
+import { HotFeedSettingsComponent } from './hotFeedSettings.component';
 import * as SecureStore from 'expo-secure-store';
 import { constants } from '@globals/constants';
 import { StackNavigationProp } from '@react-navigation/stack';
