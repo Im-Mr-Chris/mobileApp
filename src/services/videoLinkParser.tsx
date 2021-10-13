@@ -1,6 +1,7 @@
 import { api } from './api/api';
 
 export async function parseVideoLinkAsync(p_videoLink: string) {
+
     if (!p_videoLink) {
         return undefined;
     }
@@ -21,9 +22,8 @@ export async function parseVideoLinkAsync(p_videoLink: string) {
             const fullUrl = response.FullTikTokURL;
             const fullVideoId = extractTikTokVideoId(fullUrl);
             const videoLink = 'https://www.tiktok.com/embed/v2/' + fullVideoId;
-            return videoLink;
-        } catch {
-        }
+            return { videoLink, type: 'other' };
+        } catch { }
     }
 
     return undefined;
@@ -92,6 +92,7 @@ export function parseVideoLink(p_videoLink: string): { videoLink: string, type: 
 
     if (giphyMatch && giphyMatch.length > 5) {
         const videoId = giphyMatch[5];
+
         const videoLink = 'https://giphy.com/embed/' + videoId;
         return { videoLink, type: 'others' };
     }

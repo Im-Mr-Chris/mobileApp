@@ -140,7 +140,7 @@ export function CreatePostComponent(
             }
             if (!result.cancelled) {
                 if (result.type === 'image') {
-                    if (isMounted) {
+                    if (isMounted.current) {
                         const uri = (result as ImageInfo).uri;
                         setImageUrls(previous => [...previous, uri]);
                         setImagesBase64((previous: string[]) => [...previous, uri]);
@@ -179,23 +179,22 @@ export function CreatePostComponent(
     }
 
     async function onPasteVideoLink(): Promise<void> {
-        const videoLink = await Clipboard.getStringAsync();
-        if (!videoLink) {
-            Alert.alert('Clipboard is empty!', 'Please make sure you copied the link correctly.');
-            return;
-        }
-
-        const parsedVideoLink = await parseVideoLinkAsync(videoLink);
-
-        if (parsedVideoLink) {
-            if (isMounted) {
-                setInternalVideoLink(parsedVideoLink);
-                setVideoLink(parsedVideoLink);
+        try {
+            const copiedVideolink = await Clipboard.getStringAsync();
+            if (!copiedVideolink) {
+                Alert.alert('Clipboard is empty!', 'Please make sure you copied the link correctly.');
+                return;
             }
-
-        } else {
-            Alert.alert('Error', 'The video link is not valid. We just support YouTube, TikTok, Vimeo, Spotify, SoundCloud and GIPHY links.');
-        }
+            const parseVideoLink = await parseVideoLinkAsync(copiedVideolink);
+            if (parseVideoLink) {
+                if (isMounted.current) {
+                    setInternalVideoLink(parseVideoLink.videoLink);
+                    setVideoLink(parseVideoLink.videoLink);
+                }
+            } else {
+                Alert.alert('Error', 'The video link is not valid. We just support YouTube, TikTok, Vimeo, Spotify, SoundCloud and GIPHY links.');
+            }
+        } catch { }
     }
 
     function onMentionChange(value: string): void {
