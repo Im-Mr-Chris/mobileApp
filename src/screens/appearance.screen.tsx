@@ -7,14 +7,9 @@ import { SelectListControl } from '@controls/selectList.control';
 import { api, cache } from '@services';
 import { signing } from '@services/authorization/signing';
 import CloutFeedButton from '@components/cloutfeedButton.component';
-import { ChangeFollowersEvent, EventType } from '@types';
+import { ChangeFollowersEvent, CloutFeedTheme, EventType } from '@types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
-
-export enum CloutFeedTheme {
-    Light = 'light',
-    Dark = 'dark'
-}
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>

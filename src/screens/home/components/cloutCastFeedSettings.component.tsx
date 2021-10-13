@@ -3,17 +3,7 @@ import { themeStyles } from '@styles/globalColors';
 import React from 'react';
 import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import Modal from 'react-native-modal';
-
-export enum CloutCastFeedFilter {
-    None = 'None',
-    ForMe = 'ForMe'
-}
-
-export enum CloutCastFeedSort {
-    None = 'None',
-    HighestPayout = 'HighestPayout',
-    LowestPayout = 'LowestPayout'
-}
+import { CloutCastFeedFilter, CloutCastFeedSort } from '@types';
 
 interface Props {
     filter: CloutCastFeedFilter;

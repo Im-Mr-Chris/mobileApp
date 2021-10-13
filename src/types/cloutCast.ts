@@ -1,3 +1,4 @@
+import { CloutCastAction } from './enums';
 import { Post } from './models';
 
 export interface CloutCastPromotion {
@@ -38,10 +39,4 @@ export interface CloutCastPromotionHeader {
 export interface CloutCastPromotionTarget {
     action: CloutCastAction;
     hex: string;
-}
-
-export enum CloutCastAction {
-    ReClout = 'ReClout',
-    Quote = 'Quote',
-    Comment = 'Comment'
 }

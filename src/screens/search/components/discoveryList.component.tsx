@@ -4,12 +4,14 @@ import { StyleSheet, View, Text, RefreshControl, TouchableOpacity } from 'react-
 import { FontAwesome, SimpleLineIcons, Octicons, Entypo, AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { api, cache, cloutFeedApi, getAnonymousProfile } from '@services';
-import { CloutTag, DiscoveryType, Profile } from '@types';
+import { CloutTag, DiscoveryType, EventType, HiddenNFTType, Profile, ToggleHideNFTsEvent } from '@types';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { ScrollView } from 'react-native-gesture-handler';
 import { ProfileListCardComponent } from '@components/profileListCard.component';
 import { cloutApi } from '@services/api/cloutApi';
 import CloutTagListCardComponent from './cloutTagCard.component';
+import { globals } from '@globals/globals';
+import { eventManager } from '@globals/injector';
 
 interface Props {
     navigation: StackNavigationProp<any>;
@@ -21,6 +23,7 @@ interface State {
     refreshing: boolean;
     featuredProfiles: Profile[];
     trendingCloutTags: CloutTag[];
+    hiddenNFTType: HiddenNFTType;
 }
 
 export default class DiscoveryListComponent extends React.Component<Props, State> {
@@ -29,6 +32,8 @@ export default class DiscoveryListComponent extends React.Component<Props, State
 
     private _isMounted = false;
 
+    private _unsubscribeHideNFTsEvent: () => void = () => undefined;
+
     constructor(props: Props) {
         super(props);
 
@@ -36,12 +41,15 @@ export default class DiscoveryListComponent extends React.Component<Props, State
             isLoading: true,
             refreshing: false,
             featuredProfiles: [],
-            trendingCloutTags: []
+            trendingCloutTags: [],
+            hiddenNFTType: HiddenNFTType.None
         };
 
         this.init();
 
         this.init = this.init.bind(this);
+
+        this.subscribeToggleHideNFTOptions();
     }
 
     componentDidMount() {
@@ -50,10 +58,12 @@ export default class DiscoveryListComponent extends React.Component<Props, State
 
     componentWillUnmount() {
         this._isMounted = false;
+        this._unsubscribeHideNFTsEvent();
     }
 
     shouldComponentUpdate(_prevProps: Props, prevState: State) {
-        return prevState.isLoading !== this.state.isLoading;
+        return prevState.isLoading !== this.state.isLoading ||
+            this.state.hiddenNFTType !== prevState.hiddenNFTType;
     }
 
     private async init() {
@@ -115,6 +125,17 @@ export default class DiscoveryListComponent extends React.Component<Props, State
         }
     }
 
+    private subscribeToggleHideNFTOptions(): void {
+        this._unsubscribeHideNFTsEvent = eventManager.addEventListener(
+            EventType.ToggleHideNFTs,
+            (event: ToggleHideNFTsEvent) => {
+                if (this._isMounted) {
+                    this.setState({ hiddenNFTType: event.type });
+                }
+            }
+        );
+    }
+
     private renderListItem(icon: any, text: string, discoveryType: DiscoveryType, screen = 'DiscoveryTypeCreator', newElement = false) {
         return <TouchableOpacity
             onPress={() => this.props.navigation.push(screen, { discoveryType })}
@@ -130,7 +151,7 @@ export default class DiscoveryListComponent extends React.Component<Props, State
     render() {
 
         if (this.state.isLoading) {
-            return <CloutFeedLoader></CloutFeedLoader>;
+            return <CloutFeedLoader />;
         }
 
         return <ScrollView
@@ -144,7 +165,11 @@ export default class DiscoveryListComponent extends React.Component<Props, State
                 />
             }>
 
-            {this.renderListItem(<AntDesign name="picture" size={24} color={themeStyles.fontColorMain.color} />, 'NFT Gallery', DiscoveryType.FeaturedNFT, 'DiscoveryTypePost', true)}
+            {
+                globals.areNFTsHidden && globals.hiddenNFTType === HiddenNFTType.Posts ?
+                    <></> :
+                    this.renderListItem(<AntDesign name="picture" size={24} color={themeStyles.fontColorMain.color} />, 'NFT Gallery', DiscoveryType.FeaturedNFT, 'DiscoveryTypePost', true)
+            }
             {this.renderListItem(<Octicons name="project" size={24} color={themeStyles.fontColorMain.color} />, 'Community Projects', DiscoveryType.CommunityProject)}
             {this.renderListItem(<FontAwesome name="line-chart" size={21} color={themeStyles.fontColorMain.color} />, 'Value Creators', DiscoveryType.ValueCreator)}
             {this.renderListItem(<SimpleLineIcons name="user-female" size={24} color={themeStyles.fontColorMain.color} />, 'Goddesses', DiscoveryType.Goddess)}

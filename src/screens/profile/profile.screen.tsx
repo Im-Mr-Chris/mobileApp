@@ -6,7 +6,7 @@ import { ProfileNotCompletedComponent } from '@components/profileNotCompleted.co
 import { TabConfig, TabsComponent } from '@components/tabs.component';
 import { globals, navigatorGlobals } from '@globals';
 import { api, cache, calculateDeSoInUSD } from '@services';
-import { CreatorCoinHODLer, DiamondSender, Post, Profile } from '@types';
+import { CreatorCoinHODLer, DiamondSender, Post, Profile, ProfileScreenTab } from '@types';
 import { ProfileStats } from './profileStats.component';
 import { themeStyles } from '@styles/globalColors';
 import { ProfileCard } from './profileCard.component';
@@ -18,13 +18,6 @@ import { cloutApi } from '@services/api/cloutApi';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { ParamListBase, RouteProp, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-
-enum ProfileScreenTab {
-    Posts = 'Posts',
-    CreatorCoin = 'Creator Coin',
-    Stats = 'Stats',
-    Diamonds = 'Diamonds'
-}
 
 type Route = {
     route: {

@@ -1,8 +1,8 @@
 import { constants } from '@globals/constants';
 import { globals } from '@globals/globals';
-import { MessageFilter, MessageSort } from '@screens/messages/components/messageSettings';
 import * as SecureStore from 'expo-secure-store';
 import { api } from './api/api';
+import { MessageSort, MessageFilter } from '@types';
 
 function validSort(value: MessageSort): boolean {
     return value === MessageSort.MostRecent ||

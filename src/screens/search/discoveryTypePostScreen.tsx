@@ -1,6 +1,6 @@
 import React from 'react';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
-import { DiscoveryType, Post } from '@types';
+import { DiscoveryType, EventType, HiddenNFTType, Post } from '@types';
 import { api, cloutFeedApi } from '@services';
 import { RouteProp } from '@react-navigation/native';
 import { FlatList, RefreshControl } from 'react-native';
@@ -8,6 +8,7 @@ import { themeStyles } from '@styles/globalColors';
 import { globals } from '@globals/globals';
 import { PostComponent } from '../../components/post/post.component';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { eventManager } from '@globals/injector';
 
 type RouteParams = {
     DiscoveryTypePost: {
@@ -24,11 +25,14 @@ interface State {
     isLoading: boolean;
     isRefreshing: boolean;
     posts: Post[];
+    hiddenNFTOption: HiddenNFTType;
 }
 
 export class DiscoveryTypePostScreen extends React.Component<Props, State>{
 
     private _isMounted = false;
+
+    private _unsubscribeHideNFTsEvent: () => void = () => undefined;
 
     constructor(props: Props) {
         super(props);
@@ -36,12 +40,14 @@ export class DiscoveryTypePostScreen extends React.Component<Props, State>{
         this.state = {
             isLoading: true,
             isRefreshing: false,
-            posts: []
+            posts: [],
+            hiddenNFTOption: HiddenNFTType.None,
         };
 
         this.init();
 
         this.init = this.init.bind(this);
+        this.subscribeToggleHideNFTOptions();
     }
 
     componentDidMount() {
@@ -50,6 +56,18 @@ export class DiscoveryTypePostScreen extends React.Component<Props, State>{
 
     componentWillUnmount() {
         this._isMounted = false;
+        this._unsubscribeHideNFTsEvent();
+    }
+
+    private subscribeToggleHideNFTOptions(): void {
+        this._unsubscribeHideNFTsEvent = eventManager.addEventListener(
+            EventType.ToggleHideNFTs,
+            () => {
+                if (globals.areNFTsHidden && globals.hiddenNFTType === HiddenNFTType.Posts) {
+                    this.props.navigation.pop();
+                }
+            }
+        );
     }
 
     private async init() {
@@ -87,7 +105,7 @@ export class DiscoveryTypePostScreen extends React.Component<Props, State>{
 
     render() {
         if (this.state.isLoading) {
-            return <CloutFeedLoader></CloutFeedLoader>;
+            return <CloutFeedLoader />;
         }
 
         const keyExtractor = (item: Post, index: number) => item.PostHashHex + index;

@@ -6,20 +6,8 @@ import * as SecureStore from 'expo-secure-store';
 import { constants } from '@globals/constants';
 import { globals } from '@globals/globals';
 import { eventManager } from '@globals/injector';
-import { EventType, ToggleCloutCastFeedEvent, ToggleHideNFTsEvent } from '@types';
+import { EventType, FeedType, HiddenNFTType, ToggleCloutCastFeedEvent, ToggleHideNFTsEvent } from '@types';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
-
-export enum HiddenNFTType {
-    Posts = 'Post',
-    Details = 'Details',
-}
-
-enum FeedType {
-    Hot = 'Hot',
-    Global = 'Global',
-    Following = 'Following',
-    Recent = 'Recent',
-}
 
 interface State {
     isLoading: boolean;
@@ -71,10 +59,25 @@ export class FeedSettingsScreen extends React.Component<Record<string, never>, S
         const newValue = !this.state.areNFTsHidden;
         this.setState({ areNFTsHidden: newValue });
 
-        const event: ToggleHideNFTsEvent = { hidden: newValue };
+        let type = this.state.hiddenNFTType;
+        if (this.state.areNFTsHidden) {
+            type = HiddenNFTType.None;
+        } else {
+            type = HiddenNFTType.Details;
+            this.setState({ hiddenNFTType: type });
+        }
+        globals.areNFTsHidden = newValue;
+        globals.hiddenNFTType = type;
+
+        const event: ToggleHideNFTsEvent = { hidden: newValue, type };
         eventManager.dispatchEvent(EventType.ToggleHideNFTs, event);
+
+        const typeKey = globals.user.publicKey + constants.localStorage_hiddenNFTType;
+        SecureStore.setItemAsync(typeKey, String(type)).catch(() => undefined);
+
         const key = globals.user.publicKey + constants.localStorage_nftsHidden;
         SecureStore.setItemAsync(key, String(newValue)).catch(() => undefined);
+
     }
 
     private onFeedTypeChange(type: FeedType): void {
@@ -86,6 +89,11 @@ export class FeedSettingsScreen extends React.Component<Record<string, never>, S
 
     private onHiddenNFTTypeChange(type: HiddenNFTType): void {
         this.setState({ hiddenNFTType: type });
+        const newValue = this.state.areNFTsHidden;
+
+        globals.hiddenNFTType = type;
+        const event: ToggleHideNFTsEvent = { hidden: newValue, type };
+        eventManager.dispatchEvent(EventType.ToggleHideNFTs, event);
 
         const key = globals.user.publicKey + constants.localStorage_hiddenNFTType;
         SecureStore.setItemAsync(key, String(type)).catch(() => undefined);

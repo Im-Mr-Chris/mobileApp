@@ -16,7 +16,7 @@ export function PostScreen({ route, navigation }: any) {
     const [sections, setSections] = useState<any>({});
     const noMoreData = useRef(false);
 
-    let mount = true;
+    const isMounted = useRef(true);
 
     const postHashHex = route.params.postHashHex;
     if (route.params.newComment && post?.PostHashHex) {
@@ -30,7 +30,7 @@ export function PostScreen({ route, navigation }: any) {
             newComments.unshift(route.params.newComment);
         }
 
-        if (mount) {
+        if (isMounted.current) {
             setPost(p_previousPost => ({ ...p_previousPost, Comments: newComments }));
             const sections = [
                 {
@@ -73,7 +73,7 @@ export function PostScreen({ route, navigation }: any) {
             }
 
             return () => {
-                mount = false;
+                isMounted.current = false;
             };
         },
         []
@@ -114,7 +114,7 @@ export function PostScreen({ route, navigation }: any) {
                 }
             }
 
-            if (mount) {
+            if (isMounted.current) {
                 const parentPosts = p_response?.PostFound?.ParentPosts as Post[] || [];
                 setParentPosts(parentPosts);
                 setPost(backendPost);
@@ -144,7 +144,7 @@ export function PostScreen({ route, navigation }: any) {
             return;
         }
 
-        if (mount) {
+        if (isMounted.current) {
             setLoadingMore(true);
         }
         api.getSinglePost(globals.user.publicKey, postHashHex, false, commentIndex, 20).then(
@@ -154,7 +154,7 @@ export function PostScreen({ route, navigation }: any) {
                     const filteredComments = backendPost.Comments.filter(p_comment => !!p_comment.ProfileEntryResponse);
                     const newComments = post.Comments.concat(filteredComments);
 
-                    if (mount) {
+                    if (isMounted.current) {
                         setPost(p_previousPost => ({ ...p_previousPost, Comments: newComments }));
 
                         const sections = [
@@ -183,43 +183,45 @@ export function PostScreen({ route, navigation }: any) {
             p_response => globals.defaultHandleError(p_response)
         ).finally(
             () => {
-                if (mount) {
+                if (isMounted.current) {
                     setLoadingMore(false);
                 }
             }
         );
     }
 
-    return isLoading ?
-        <CloutFeedLoader />
-        :
-        <View style={[styles.container, themeStyles.containerColorMain]}>
-            <SectionList
-                stickySectionHeadersEnabled={true}
-                sections={sections}
-                keyExtractor={(item, index) => item.PostHashHex + String(index)}
-                renderItem={
-                    ({ item, section }) =>
-                        <PostComponent
-                            route={route}
-                            navigation={navigation}
-                            post={item}
-                            disablePostNavigate={section.headerPost}
-                            isParentPost={section.parentPost}
-                            hideBottomBorder={section.headerPost || section.parentPost}></PostComponent>
-                }
-                renderSectionHeader={
-                    ({ section: { headerPost, parentPost } }) => {
-                        return headerPost || parentPost ? <View></View> :
-                            <View style={themeStyles.containerColorSub}>
-                                <Text style={[styles.commentsText, themeStyles.fontColorMain]}>Comments</Text>
-                            </View>;
-                    }
-                }
-                onEndReached={loadMoreComments}
-                ListFooterComponent={isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color}></ActivityIndicator> : undefined}
-            />
-        </View >;
+    const renderHeader = (headerPost: Post, parentPost: Post) => headerPost || parentPost ?
+        <View /> :
+        <View style={themeStyles.containerColorSub}>
+            <Text style={[styles.commentsText, themeStyles.fontColorMain]}>Comments</Text>
+        </View>;
+    const keyExtractor = (item: Post, index: number): string => `${item.PostHashHex}_${index.toString()}`;
+
+    const renderItem = (item: Post, section: any): JSX.Element => <PostComponent
+        isPostScreen={true}
+        route={route}
+        navigation={navigation}
+        post={item}
+        disablePostNavigate={section.headerPost}
+        isParentPost={section.parentPost}
+        hideBottomBorder={section.headerPost || section.parentPost}
+    />;
+
+    const renderFooter = isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : undefined;
+    if (isLoading) {
+        return <CloutFeedLoader />;
+    }
+    return <View style={[styles.container, themeStyles.containerColorMain]}>
+        <SectionList
+            stickySectionHeadersEnabled={true}
+            sections={sections}
+            keyExtractor={keyExtractor}
+            renderItem={({ item, section }) => renderItem(item, section)}
+            renderSectionHeader={({ section: { headerPost, parentPost } }) => renderHeader(headerPost, parentPost)}
+            onEndReached={loadMoreComments}
+            ListFooterComponent={renderFooter}
+        />
+    </View >;
 
 }
 

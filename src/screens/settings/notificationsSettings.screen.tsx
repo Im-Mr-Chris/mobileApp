@@ -1,21 +1,11 @@
 import React from 'react';
 import { Text, StyleSheet, View, Switch, FlatList } from 'react-native';
 import { themeStyles } from '@styles/globalColors';
-import { cloutFeedApi, notificationsService } from '@services';
+import { cloutFeedApi } from '@services';
 import { signing } from '@services/authorization/signing';
 import { globals } from '@globals/globals';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
-
-enum NotificationSetting {
-    Active = 'Active',
-    Like = 'Like',
-    Follow = 'Follow',
-    Comment = 'Comment',
-    Mention = 'Mention',
-    Reclout = 'Reclout',
-    Diamond = 'Diamond',
-    Monetary = 'Monetary'
-}
+import { NotificationSetting } from '@types';
 
 type NotificationSettings = {
     [key in NotificationSetting]: boolean;

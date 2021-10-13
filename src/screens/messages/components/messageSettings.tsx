@@ -3,20 +3,7 @@ import { themeStyles } from '@styles/globalColors';
 import React from 'react';
 import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import Modal from 'react-native-modal';
-
-export enum MessageFilter {
-    Holders = 'Holders',
-    Holding = 'Holding',
-    Followers = 'Followers',
-    Following = 'Following'
-}
-
-export enum MessageSort {
-    MostRecent = 'time',
-    MostFollowed = 'followers',
-    MostClout = 'clout',
-    LargestHolder = 'holders',
-}
+import { MessageFilter, MessageSort } from '@types';
 
 interface Props {
     filter: MessageFilter[];

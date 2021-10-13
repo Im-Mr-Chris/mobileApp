@@ -25,13 +25,13 @@ interface State {
 
 export class SavedPostsScreen extends React.Component<Props, State> {
 
-    private _unsavePostSubscription: () => void = () => undefined;
-
     private _noMoreData = false;
 
     private _postHashHexes: string[] = [];
 
     private _isMounted = false;
+
+    private _unsavePostSubscription: () => void = () => undefined;
 
     constructor(props: Props) {
         super(props);
@@ -40,13 +40,13 @@ export class SavedPostsScreen extends React.Component<Props, State> {
             isLoading: true,
             posts: [],
             isRefreshing: false,
-            isLoadingMore: false
+            isLoadingMore: false,
         };
 
         this.loadData();
-        this.subscribeUnsavePostEvent();
 
         this.loadData = this.loadData.bind(this);
+        this.subscribeUnsavePostEvent();
     }
 
     componentDidMount() {
@@ -161,7 +161,8 @@ export class SavedPostsScreen extends React.Component<Props, State> {
         return filteredPosts;
     }
 
-    render() {
+    render(): JSX.Element {
+
         if (this.state.isLoading) {
             return <CloutFeedLoader />;
         }
@@ -173,12 +174,10 @@ export class SavedPostsScreen extends React.Component<Props, State> {
         }
 
         const keyExtractor = (item: Post, index: number) => item.PostHashHex + String(index);
-        const renderItem = ({ item }: { item: Post }) => {
-            return <PostComponent
-                route={this.props.route}
-                navigation={this.props.navigation}
-                post={item} />;
-        };
+        const renderItem = ({ item }: { item: Post }) => <PostComponent
+            route={this.props.route}
+            navigation={this.props.navigation}
+            post={item} />;
 
         return (
             <View style={[{ flex: 1 }, themeStyles.containerColorMain]}>

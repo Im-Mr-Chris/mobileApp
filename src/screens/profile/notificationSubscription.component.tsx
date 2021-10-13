@@ -7,11 +7,7 @@ import { cloutFeedApi } from '@services';
 import { globals } from '@globals/globals';
 import Modal from 'react-native-modal';
 import { SelectListControl } from '@controls/selectList.control';
-
-enum NotificationType {
-    Post = 'Post',
-    FounderReward = 'FounderReward'
-}
+import { SubscriptionNotificationType } from '@types';
 
 interface Props {
     publicKey: string;
@@ -20,7 +16,7 @@ interface Props {
 interface State {
     isNotificationSubscriptionLoading: boolean;
     notificationModalVisible: boolean;
-    subscribedNotifications: NotificationType[];
+    subscribedNotifications: SubscriptionNotificationType[];
 }
 
 class NotificationSubscriptionComponent extends Component<Props, State> {
@@ -59,10 +55,10 @@ class NotificationSubscriptionComponent extends Component<Props, State> {
             const response = await cloutFeedApi.getNotificationSubscriptions(globals.user.publicKey, jwt, this.props.publicKey);
             const subscribedNotifications = [];
             if (response.post === true) {
-                subscribedNotifications.push(NotificationType.Post);
+                subscribedNotifications.push(SubscriptionNotificationType.Post);
             }
             if (response.founderReward === true) {
-                subscribedNotifications.push(NotificationType.FounderReward);
+                subscribedNotifications.push(SubscriptionNotificationType.FounderReward);
             }
 
             if (this._isMounted) {
@@ -90,7 +86,7 @@ class NotificationSubscriptionComponent extends Component<Props, State> {
         }
     }
 
-    private async subscribeNotifications(p_notificationType: NotificationType): Promise<void> {
+    private async subscribeNotifications(p_notificationType: SubscriptionNotificationType): Promise<void> {
         try {
             if (this._isMounted) {
                 this.setState({ isNotificationSubscriptionLoading: true });
@@ -112,7 +108,7 @@ class NotificationSubscriptionComponent extends Component<Props, State> {
         }
     }
 
-    private async unSubscribeNotifications(p_notificationType: NotificationType): Promise<void> {
+    private async unSubscribeNotifications(p_notificationType: SubscriptionNotificationType): Promise<void> {
         try {
             if (this._isMounted) {
                 this.setState({ isNotificationSubscriptionLoading: true });
@@ -136,19 +132,19 @@ class NotificationSubscriptionComponent extends Component<Props, State> {
     }
 
     private onSubscribedNotificationChange(p_value: string[]): void {
-        const shouldSubscribePostNotification = p_value.includes(NotificationType.Post) && !this.state.subscribedNotifications.includes(NotificationType.Post);
-        const shouldUnSubscribePostNotification = !p_value.includes(NotificationType.Post) && this.state.subscribedNotifications.includes(NotificationType.Post);
-        const shouldSubscribeFRNotification = p_value.includes(NotificationType.FounderReward) && !this.state.subscribedNotifications.includes(NotificationType.FounderReward);
-        const shouldUnSubscribeFRNotification = !p_value.includes(NotificationType.FounderReward) && this.state.subscribedNotifications.includes(NotificationType.FounderReward);
+        const shouldSubscribePostNotification = p_value.includes(SubscriptionNotificationType.Post) && !this.state.subscribedNotifications.includes(SubscriptionNotificationType.Post);
+        const shouldUnSubscribePostNotification = !p_value.includes(SubscriptionNotificationType.Post) && this.state.subscribedNotifications.includes(SubscriptionNotificationType.Post);
+        const shouldSubscribeFRNotification = p_value.includes(SubscriptionNotificationType.FounderReward) && !this.state.subscribedNotifications.includes(SubscriptionNotificationType.FounderReward);
+        const shouldUnSubscribeFRNotification = !p_value.includes(SubscriptionNotificationType.FounderReward) && this.state.subscribedNotifications.includes(SubscriptionNotificationType.FounderReward);
 
         if (shouldSubscribePostNotification) {
-            this.subscribeNotifications(NotificationType.Post);
+            this.subscribeNotifications(SubscriptionNotificationType.Post);
         } else if (shouldUnSubscribePostNotification) {
-            this.unSubscribeNotifications(NotificationType.Post);
+            this.unSubscribeNotifications(SubscriptionNotificationType.Post);
         } else if (shouldSubscribeFRNotification) {
-            this.subscribeNotifications(NotificationType.FounderReward);
+            this.subscribeNotifications(SubscriptionNotificationType.FounderReward);
         } else if (shouldUnSubscribeFRNotification) {
-            this.unSubscribeNotifications(NotificationType.FounderReward);
+            this.unSubscribeNotifications(SubscriptionNotificationType.FounderReward);
         }
     }
 
@@ -187,11 +183,11 @@ class NotificationSubscriptionComponent extends Component<Props, State> {
                                         options={[
                                             {
                                                 name: 'Post',
-                                                value: NotificationType.Post
+                                                value: SubscriptionNotificationType.Post
                                             },
                                             {
                                                 name: 'FR Change',
-                                                value: NotificationType.FounderReward
+                                                value: SubscriptionNotificationType.FounderReward
                                             }
                                         ]}
                                         value={this.state.subscribedNotifications}

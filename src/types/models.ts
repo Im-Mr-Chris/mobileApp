@@ -1,3 +1,5 @@
+import { NotificationType } from './enums';
+
 export interface User {
     publicKey: string;
 }
@@ -86,17 +88,6 @@ export interface Post {
     BidAmountNanos: number;
     NFTRoyaltyToCoinBasisPoints: number;
     NFTRoyaltyToCreatorBasisPoints: number;
-}
-
-export enum NotificationType {
-    SubmitPost = 'SUBMIT_POST',
-    BasicTransfer = 'BASIC_TRANSFER',
-    CreatorCoin = 'CREATOR_COIN',
-    Follow = 'FOLLOW',
-    Like = 'LIKE',
-    CreatorCoinTransfer = 'CREATOR_COIN_TRANSFER',
-    NftBid = 'NFT_BID',
-    AcceptNftBid = 'ACCEPT_NFT_BID'
 }
 
 export interface NotificationLikeMetaData {
@@ -211,15 +202,6 @@ export interface CreatorCoinTransaction {
 export interface CloutTag {
     clouttag: string;
     count: number;
-}
-
-export enum DiscoveryType {
-    ValueCreator = 'ValueCreator',
-    Goddess = 'Goddess',
-    CommunityProject = 'CommunityProject',
-    FeaturedCreator = 'FeaturedCreator',
-    Developer = 'Developer',
-    FeaturedNFT = 'FeaturedNFT'
 }
 
 export interface BidEdition {

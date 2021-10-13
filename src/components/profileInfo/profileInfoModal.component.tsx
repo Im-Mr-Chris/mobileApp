@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Image, View, TouchableOpacity, Text, Dimensions, ActivityIndicator, Platform } from 'react-native';
-import { ChangeFollowersEvent, EventType, Profile, User } from '@types';
+import { ChangeFollowersEvent, EventType, OptionType, Profile, User } from '@types';
 import { eventManager } from '@globals/injector';
 import { ProfileCard } from '@screens/profile/profileCard.component';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -18,13 +18,6 @@ interface Props {
     navigation: StackNavigationProp<ParamListBase>;
     profile: Profile;
     coinPrice: number;
-}
-
-enum OptionType {
-    Post = 'Post',
-    FounderReward = 'FounderReward',
-    Follow = 'Follow',
-    None = ''
 }
 
 interface State {

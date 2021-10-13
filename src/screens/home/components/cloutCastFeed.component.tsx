@@ -3,7 +3,7 @@ import { NavigationProp } from '@react-navigation/native';
 import { api, cache, cloutCastApi } from '@services';
 import { signing } from '@services/authorization/signing';
 import { themeStyles } from '@styles/globalColors';
-import { CloutCastPromotion, Post } from '@types';
+import { CloutCastFeedFilter, CloutCastFeedSort, CloutCastPromotion, Post } from '@types';
 import React from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, View, Text, StyleSheet, Linking, Image, TouchableOpacity } from 'react-native';
 import { CloutCastPostComponent } from './cloutCastPost.component';
@@ -11,7 +11,7 @@ import * as SecureStore from 'expo-secure-store';
 import { CloutCastIntroductionComponent } from './cloutCastIntroduction.component';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { Ionicons } from '@expo/vector-icons';
-import { CloutCastFeedFilter, CloutCastFeedSettingsComponent, CloutCastFeedSort } from './cloutCastFeedSettings.component';
+import { CloutCastFeedSettingsComponent } from './cloutCastFeedSettings.component';
 
 interface Props {
     navigation: NavigationProp<any> | any;

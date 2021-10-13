@@ -1,5 +1,6 @@
 import * as Network from 'expo-network';
 import { Alert } from 'react-native';
+import { HiddenNFTType } from '@types';
 
 export const globals = {
     cloutCastToken: '',
@@ -31,5 +32,7 @@ export const globals = {
         }
     },
     dispatchRefreshMessagesEvent: () => { 0; },
-    checkedInitialRoute: false
+    checkedInitialRoute: false,
+    areNFTsHidden: false,
+    hiddenNFTType: HiddenNFTType.None
 };

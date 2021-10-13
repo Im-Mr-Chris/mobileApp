@@ -3,11 +3,7 @@ import { themeStyles } from '@styles/globalColors';
 import React from 'react';
 import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import Modal from 'react-native-modal';
-
-export enum HotFeedFilter {
-    Today = 'day',
-    Week = 'week'
-}
+import { HotFeedFilter } from '@types';
 
 interface Props {
     filter: HotFeedFilter;

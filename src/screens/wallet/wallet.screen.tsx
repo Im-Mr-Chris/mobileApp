@@ -3,7 +3,7 @@ import { View, StyleSheet, RefreshControl, Text, SectionList } from 'react-nativ
 import { globals } from '@globals/globals';
 import { themeStyles } from '@styles/globalColors';
 import { calculateAndFormatDeSoInUsd, calculateDeSoInUSD } from '@services/deSoCalculator';
-import { CoinEntry, CreatorCoinHODLer, User } from '@types';
+import { CoinEntry, CreatorCoinHODLer, User, WalletTab } from '@types';
 import { TabConfig, TabsComponent } from '@components/tabs.component';
 import { CreatorCoinHODLerComponent } from '@components/creatorCoinHODLer.component';
 import { formatNumber } from '@services/helpers';
@@ -11,11 +11,6 @@ import { navigatorGlobals } from '@globals/navigatorGlobals';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { api, cache } from '@services';
 import { RouteProp } from '@react-navigation/native';
-
-enum WalletTab {
-    Purchased = 'Purchased',
-    Received = 'Received'
-}
 
 interface Section {
     header: boolean;

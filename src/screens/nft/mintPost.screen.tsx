@@ -8,6 +8,7 @@ import { api, calculateAndFormatDeSoInUsd, nftApi } from '@services';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { signing } from '@services/authorization/signing';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { NftType } from '@types';
 
 type RouteParams = {
     mint: {
@@ -18,11 +19,6 @@ type RouteParams = {
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
     route: RouteProp<RouteParams, 'mint'>;
-}
-
-enum NftType {
-    Single = 'Single',
-    Multiple = 'Multiple'
 }
 
 interface State {

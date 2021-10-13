@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Animated } from 'react-native';
-import { Post } from '@types';
+import { EventType, HiddenNFTType, Post, ToggleHideNFTsEvent } from '@types';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { ImageGalleryComponent } from '../imageGallery.component';
 import { TextWithLinks } from '../textWithLinks.component';
-import { globals, hapticsManager } from '@globals';
+import { eventManager, globals, hapticsManager } from '@globals';
 import { calculateAndFormatDeSoInUsd, calculateDurationUntilNow } from '@services';
 import { themeStyles } from '@styles';
 import { PostOptionsComponent } from './postOptions.components';
@@ -26,6 +26,7 @@ interface Props {
     recloutedPostIndex?: number,
     isParentPost?: boolean;
     isPinned?: boolean;
+    isPostScreen?: boolean;
 }
 
 interface State {
@@ -33,6 +34,8 @@ interface State {
     durationUntilNow: string;
     actionsDisabled: boolean;
     isHeartShowed: boolean;
+    hiddenNFTType: HiddenNFTType;
+    areNFTsHidden: boolean;
 }
 
 export class PostComponent extends React.Component<Props, State> {
@@ -42,6 +45,8 @@ export class PostComponent extends React.Component<Props, State> {
     private _inputRange = [0, 1.3];
 
     private _outputRange = [0, 1.3];
+
+    private _unsubscribeHideNFTsEvent: () => void = () => undefined;
 
     private _scale = this._animation.interpolate({
         inputRange: this._inputRange,
@@ -58,7 +63,9 @@ export class PostComponent extends React.Component<Props, State> {
             coinPrice,
             durationUntilNow,
             actionsDisabled: this.props.actionsDisabled || globals.readonly,
-            isHeartShowed: false
+            isHeartShowed: false,
+            hiddenNFTType: HiddenNFTType.None,
+            areNFTsHidden: false,
         };
 
         if (this.props.post.ImageURLs?.length > 0) {
@@ -98,11 +105,12 @@ export class PostComponent extends React.Component<Props, State> {
         this.goToNFT = this.goToNFT.bind(this);
         this.getEmbeddedVideoLink = this.getEmbeddedVideoLink.bind(this);
         this.toggleHeartIcon = this.toggleHeartIcon.bind(this);
+
+        this.subscribeToggleHideNFTOptions();
     }
 
-    shouldComponentUpdate(p_nextProps: Props, p_nextState: State): boolean {
-        return this.props.post.PostHashHex !== p_nextProps.post.PostHashHex
-            || this.state.isHeartShowed !== p_nextState.isHeartShowed;
+    componentWillUnmount(): void {
+        this._unsubscribeHideNFTsEvent();
     }
 
     private goToStats(): void {
@@ -186,8 +194,37 @@ export class PostComponent extends React.Component<Props, State> {
         );
     }
 
+    private subscribeToggleHideNFTOptions(): void {
+        this._unsubscribeHideNFTsEvent = eventManager.addEventListener(
+            EventType.ToggleHideNFTs,
+            (event: ToggleHideNFTsEvent) => {
+                this.setState(
+                    {
+                        hiddenNFTType: event.type,
+                        areNFTsHidden: event.hidden
+                    }
+                );
+            }
+        );
+    }
+
     render(): JSX.Element {
+
         const bodyText = this.props.post.Body?.trimEnd();
+
+        if (
+            (
+                this.props.post?.IsNFT ||
+                this.props.post.RepostedPostEntryResponse?.IsNFT ||
+                this.props.post.RepostedPostEntryResponse?.RepostedPostEntryResponse?.IsNFT ||
+                this.props.post.RepostedPostEntryResponse?.RepostedPostEntryResponse?.RepostedPostEntryResponse?.IsNFT
+            ) &&
+            globals.areNFTsHidden &&
+            globals.hiddenNFTType === HiddenNFTType.Posts &&
+            !this.props.isPostScreen
+        ) {
+            return <View style={{ height: 0.1, width: 0.1 }} />;
+        }
 
         return (
             <View style=
@@ -293,10 +330,11 @@ export class PostComponent extends React.Component<Props, State> {
                         }
 
                         {
-                            this.props.post.RepostedPostEntryResponse && (this.props.recloutedPostIndex == null || this.props.recloutedPostIndex < 2) &&
+                            (this.props.post.RepostedPostEntryResponse && (this.props.recloutedPostIndex == null || this.props.recloutedPostIndex < 2)) &&
                             <View style={[styles.recloutedPostContainer, themeStyles.recloutBorderColor]}>
                                 <TouchableOpacity onPress={() => this.goToRecloutedPost()} activeOpacity={1}>
                                     <PostComponent
+                                        isPostScreen={this.props.isPostScreen}
                                         navigation={this.props.navigation}
                                         route={this.props.route}
                                         post={this.props.post.RepostedPostEntryResponse}
@@ -305,7 +343,6 @@ export class PostComponent extends React.Component<Props, State> {
                                     />
                                 </TouchableOpacity>
                             </View>
-
                         }
                         {
                             this.props.post.Body || this.props.post.ImageURLs?.length > 0 ?
@@ -318,6 +355,10 @@ export class PostComponent extends React.Component<Props, State> {
                         }
                         {
                             this.props.post?.IsNFT &&
+                            (
+                                !globals.areNFTsHidden &&
+                                globals.hiddenNFTType !== HiddenNFTType.Posts
+                            ) &&
                             <TouchableOpacity
                                 onPress={this.goToNFT}
                                 activeOpacity={1}

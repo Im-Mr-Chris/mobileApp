@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { PostComponent } from '@components/post/post.component';
-import { Post } from '@types';
+import { HiddenNFTType, HomeScreenTab, Post } from '@types';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { themeStyles } from '@styles/globalColors';
 import { globals } from '@globals/globals';
@@ -9,14 +9,6 @@ import { api, cloutFeedApi, cache } from '@services';
 import { navigatorGlobals } from '@globals/navigatorGlobals';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { StackNavigationProp } from '@react-navigation/stack';
-
-export enum HomeScreenTab {
-    Hot = 'Hot',
-    Global = 'Global',
-    Following = 'Following',
-    Recent = 'Recent',
-    Cast = 'Cast'
-}
 
 type RouteParams = {
     Home: {
@@ -38,6 +30,7 @@ interface State {
     isLoading: boolean;
     isLoadingMore: boolean;
     isRefreshing: boolean;
+    hiddenNFTOption: HiddenNFTType;
 }
 
 export class PostListComponent extends React.Component<Props, State> {
@@ -60,6 +53,7 @@ export class PostListComponent extends React.Component<Props, State> {
             isLoading: true,
             isLoadingMore: false,
             isRefreshing: false,
+            hiddenNFTOption: HiddenNFTType.Details,
         };
 
         navigatorGlobals.refreshHome = () => {
@@ -119,6 +113,7 @@ export class PostListComponent extends React.Component<Props, State> {
     }
 
     async refresh(p_showLoading = true): Promise<void> {
+
         if (this._isMounted && p_showLoading) {
             this.setState({ isLoading: true });
         } else if (this._isMounted) {
@@ -210,17 +205,18 @@ export class PostListComponent extends React.Component<Props, State> {
     }
 
     render(): JSX.Element {
+
         if (this.state.isLoading) {
             return <CloutFeedLoader />;
         }
 
-        const keyExtractor = (item: Post, index: number) => item.PostHashHex + String(index);
-        const renderItem = (item: Post) => {
-            return <PostComponent
-                route={this.props.route}
-                navigation={this.props.navigation}
-                post={item} />;
-        };
+        const keyExtractor = (item: Post, index: number): string => item.PostHashHex + String(index);
+        const renderItem = (item: Post): JSX.Element => <PostComponent
+            route={this.props.route}
+            navigation={this.props.navigation}
+            post={item}
+        />;
+
         const renderFooter = this.state.isLoadingMore && !this.state.isLoading
             ? <ActivityIndicator color={themeStyles.fontColorMain.color} />
             : undefined;
@@ -229,7 +225,8 @@ export class PostListComponent extends React.Component<Props, State> {
             tintColor={themeStyles.fontColorMain.color}
             titleColor={themeStyles.fontColorMain.color}
             refreshing={this.state.isRefreshing}
-            onRefresh={() => this.refresh(false)} />;
+            onRefresh={() => this.refresh(false)}
+        />;
 
         return (
             <View style={{ flex: 1 }}>

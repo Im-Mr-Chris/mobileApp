@@ -32,7 +32,7 @@ import { Platform, StatusBar, View } from 'react-native';
 import { AppState } from 'react-native';
 import { messagesService } from './src/services/messagesServices';
 import PlaceBidFormComponent from '@screens/nft/components/placeBidForm.component';
-import { Post } from '@types';
+import { Post, HiddenNFTType } from '@types';
 
 enableScreens();
 
@@ -224,6 +224,15 @@ export default function App(): JSX.Element {
         setFollowerFeatures(p_responses[0]);
 
         globals.user.username = p_responses[0].ProfileEntryResponse?.Username;
+
+        const key = globals.user.publicKey + constants.localStorage_nftsHidden;
+        const areNFTsHidden = await SecureStore.getItemAsync(key).catch(() => undefined);
+
+        const typeKey = globals.user.publicKey + constants.localStorage_hiddenNFTType;
+        const type = await SecureStore.getItemAsync(typeKey).catch(() => undefined) as HiddenNFTType;
+
+        globals.areNFTsHidden = areNFTsHidden === 'true';
+        globals.hiddenNFTType = type;
 
         if (globals.readonly === false) {
           notificationsService.registerPushToken().catch(() => undefined);
