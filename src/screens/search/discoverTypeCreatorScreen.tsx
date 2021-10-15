@@ -4,7 +4,7 @@ import { DiscoveryType, Profile } from '@types';
 import { api, cache, cloutFeedApi, getAnonymousProfile } from '@services';
 import { RouteProp } from '@react-navigation/native';
 import { ProfileListCardComponent } from '@components/profileListCard.component';
-import { FlatList, RefreshControl } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import { themeStyles } from '@styles/globalColors';
 
 type RouteParams = {
@@ -19,6 +19,7 @@ interface Props {
 
 interface State {
     isLoading: boolean;
+    isLoadingMore: boolean;
     isRefreshing: boolean;
     profiles: Profile[];
 }
@@ -29,18 +30,22 @@ export class DiscoveryTypeCreatorScreen extends React.Component<Props, State>{
 
     private _isMounted = false;
 
+    private _noMoreUsers = false;
+
     constructor(props: Props) {
         super(props);
 
         this.state = {
             isLoading: true,
+            isLoadingMore: false,
             isRefreshing: false,
             profiles: []
         };
 
-        this.init();
-
+        this.loadPosts = this.loadPosts.bind(this);
         this.init = this.init.bind(this);
+
+        this.init();
     }
 
     componentDidMount() {
@@ -51,37 +56,85 @@ export class DiscoveryTypeCreatorScreen extends React.Component<Props, State>{
         this._isMounted = false;
     }
 
-    private async init() {
+    private async init(): Promise<void> {
+        this._noMoreUsers = false;
+        await this.setFollowedByUserMap();
+        if (this._isMounted) {
+            this.setState({ profiles: [], isLoading: true });
+        }
+
+        this.loadPosts();
+    }
+
+    private async loadPosts(loadMore = false): Promise<void> {
+
+        if (this.state.isLoadingMore || this._noMoreUsers) {
+            return;
+        }
+
+        if (this._isMounted) {
+            this.setState({ isLoading: !loadMore, isLoadingMore: loadMore });
+        }
+
         try {
-
-            if (this._isMounted) {
-                this.setState({ isLoading: true });
-            }
-
-            await Promise.all(
-                [
-                    this.fetchCreators(),
-                    this.setFollowedByUserMap()
-                ]
-            );
+            await this.fetchCreators(loadMore);
         } catch (e) {
         } finally {
             if (this._isMounted) {
-                this.setState({ isLoading: false, isRefreshing: false });
+                this.setState(
+                    {
+                        isLoading: false,
+                        isLoadingMore: false,
+                        isRefreshing: false
+                    }
+                );
             }
         }
     }
 
-    private async fetchCreators() {
+    private async fetchCreators(loadMore: boolean) {
         const publicKeys: string[] = await cloutFeedApi.getDiscoveryType(this.props.route.params.discoveryType);
-        if (publicKeys?.length > 0) {
-            const requests = publicKeys?.map(publicKey => api.getSingleProfile('', publicKey).catch(() => ({ Profile: getAnonymousProfile(publicKey) })));
-            const response = await Promise.all(requests);
-            const profiles: Profile[] = response.map(response => response.Profile);
 
-            if (this._isMounted) {
-                this.setState({ profiles });
-            }
+        const batchSize = 12;
+
+        const profilesLength = this.state.profiles.length;
+        const slicedPublicKeys = publicKeys.slice(profilesLength, profilesLength + batchSize);
+
+        let profiles: Profile[] = [];
+        const promises: Promise<Profile>[] = [];
+
+        for (const publicKey of slicedPublicKeys) {
+            const promise = new Promise<Profile | any>(
+                (p_resolve, _reject) => {
+                    api.getSingleProfile('', publicKey)
+                        .then(
+                            (response) => {
+                                response.Profile.ProfilePic = api.getSingleProfileImage(publicKey);
+                                p_resolve(response.Profile);
+                            }
+                        ).catch(() => p_resolve({ Profile: getAnonymousProfile(publicKey) }));
+                }
+            );
+            promises.push(promise);
+        }
+        if (slicedPublicKeys.length < batchSize) {
+            this._noMoreUsers = true;
+        }
+
+        profiles = await Promise.all(promises);
+        if (loadMore) {
+            profiles = this.state.profiles.concat(profiles);
+        }
+
+        if (this._isMounted) {
+
+            this.setState(
+                {
+                    profiles,
+                    isLoading: false,
+                    isLoadingMore: false,
+                }
+            );
         }
     }
 
@@ -103,11 +156,20 @@ export class DiscoveryTypeCreatorScreen extends React.Component<Props, State>{
 
     render() {
         if (this.state.isLoading) {
-            return <CloutFeedLoader></CloutFeedLoader>;
+            return <CloutFeedLoader />;
         }
 
-        const keyExtractor = (item: Profile, index: number) => item.PublicKeyBase58Check + index;
-        const renderItem = ({ item }: { item: Profile }) => <ProfileListCardComponent profile={item} isFollowing={!!this._followedByUserMap[item.PublicKeyBase58Check]} />;
+        const keyExtractor = (item: Profile, index: number): string => item.PublicKeyBase58Check + index;
+        const renderItem = ({ item }: { item: Profile }): JSX.Element => <ProfileListCardComponent profile={item} isFollowing={!!this._followedByUserMap[item.PublicKeyBase58Check]} />;
+
+        const renderRefresh: JSX.Element = <RefreshControl
+            tintColor={themeStyles.fontColorMain.color}
+            titleColor={themeStyles.fontColorMain.color}
+            refreshing={this.state.isRefreshing}
+            onRefresh={this.init}
+        />;
+
+        const renderFooter = this.state.isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : undefined;
 
         return <FlatList
             style={themeStyles.containerColorMain}
@@ -116,15 +178,10 @@ export class DiscoveryTypeCreatorScreen extends React.Component<Props, State>{
             renderItem={renderItem}
             onEndReachedThreshold={3}
             maxToRenderPerBatch={20}
+            onEndReached={() => this.loadPosts(true)}
             windowSize={20}
-            refreshControl={
-                <RefreshControl
-                    refreshing={this.state.isRefreshing}
-                    onRefresh={this.init}
-                    tintColor={themeStyles.fontColorMain.color}
-                    titleColor={themeStyles.fontColorMain.color}
-                />
-            }
+            ListFooterComponent={renderFooter}
+            refreshControl={renderRefresh}
         />;
     }
 }
