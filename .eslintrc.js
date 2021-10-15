@@ -38,6 +38,6 @@ module.exports = {
         'eol-last': ['warn', 'always'],
         'react-native/no-inline-styles': 'off',
         '@typescript-eslint/no-empty-function': 'off',
-        'no-empty': 'off'
+        'no-empty': 'off',
     }
 };

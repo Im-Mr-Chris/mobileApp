@@ -127,7 +127,8 @@ export enum NotificationSetting {
     Mention = 'Mention',
     Reclout = 'Reclout',
     Diamond = 'Diamond',
-    Monetary = 'Monetary'
+    Monetary = 'Monetary',
+    OnlyVerified = 'OnlyVerified'
 }
 
 export enum WalletTab {

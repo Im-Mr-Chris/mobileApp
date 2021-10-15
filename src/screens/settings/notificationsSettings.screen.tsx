@@ -41,6 +41,7 @@ export default class NotificationsSettingsScreen extends React.Component<Props, 
             notificationSettings: {
                 Active: false,
                 Like: false,
+                OnlyVerified: false,
                 Follow: false,
                 Comment: false,
                 Mention: false,
@@ -83,6 +84,7 @@ export default class NotificationsSettingsScreen extends React.Component<Props, 
                     {
                         notificationSettings: {
                             Active: response.active,
+                            OnlyVerified: response.onlyVerified,
                             Like: response.like,
                             Follow: response.follow,
                             Comment: response.comment,
@@ -137,7 +139,7 @@ export default class NotificationsSettingsScreen extends React.Component<Props, 
         }
     }
 
-    render() {
+    render(): JSX.Element {
 
         if (this.state.isLoading) {
             return <CloutFeedLoader />;
@@ -173,9 +175,10 @@ export default class NotificationsSettingsScreen extends React.Component<Props, 
             );
         }
 
-        const keyExtractor = (item: Option, index: number) => `${item}_${index.toString()}`;
+        const keyExtractor = (item: Option, index: number) => `${item.title}_${index.toString()}`;
         const renderItem = (item: Option) => <View style={[styles.row, themeStyles.containerColorMain, themeStyles.borderColor]}>
-            <Text style={[styles.rowText, themeStyles.fontColorMain]}>{item.title}</Text>
+            <Text style={[styles.rowText, themeStyles.fontColorMain]}>
+                {item.title === NotificationSetting.OnlyVerified ? 'Only Verified Creators' : item.title}</Text>
             <Switch
                 trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
                 thumbColor={'white'}
