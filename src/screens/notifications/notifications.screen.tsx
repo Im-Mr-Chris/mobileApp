@@ -263,6 +263,9 @@ export class NotificationsScreen extends React.Component<Props, State> {
             return undefined;
         }
 
+        if (post?.IsHidden) {
+            return <></>;
+        }
         if (post.RepostedPostEntryResponse) {
             if (post.RepostedPostEntryResponse.ProfileEntryResponse?.PublicKeyBase58Check === globals.user.publicKey) {
                 return <PostRecloutNotificationComponent
@@ -278,10 +281,11 @@ export class NotificationsScreen extends React.Component<Props, State> {
             }
         } else {
             const parentPostHashHex = notification.Metadata.SubmitPostTxindexMetadata?.ParentPostHashHex;
-
             if (parentPostHashHex) {
                 const parentPost = this.state.posts[parentPostHashHex];
-
+                if (parentPost?.IsHidden) {
+                    return <></>;
+                }
                 if (parentPost && parentPost.ProfileEntryResponse.PublicKeyBase58Check === globals.user.publicKey) {
                     return <PostReplyNotificationComponent
                         notification={notification}
@@ -315,7 +319,6 @@ export class NotificationsScreen extends React.Component<Props, State> {
             parentPoshHashHex = notification.Metadata.SubmitPostTxindexMetadata?.PostHashBeingModifiedHex as string;
             post = this.state.posts[parentPoshHashHex];
         }
-
         return (
             <PostMentionNotificationComponent
                 profile={profile}
@@ -331,7 +334,6 @@ export class NotificationsScreen extends React.Component<Props, State> {
 
     private renderNotification(notification: Notification): any {
         if (notification?.Metadata) {
-
             const profile = this.getProfile(notification);
             switch (notification.Metadata.TxnType) {
                 case NotificationType.Follow:
@@ -342,6 +344,9 @@ export class NotificationsScreen extends React.Component<Props, State> {
                         notification={notification}
                     />;
                 case NotificationType.BasicTransfer:
+                    if (this.state.posts[notification.Metadata.BasicTransferTxindexMetadata?.PostHashHex as string]?.IsHidden) {
+                        return <></>;
+                    }
                     return <BasicTransferNotificationComponent
                         navigation={this.props.navigation}
                         notification={notification}
@@ -352,6 +357,9 @@ export class NotificationsScreen extends React.Component<Props, State> {
                     />;
                 case NotificationType.Like: {
                     const postHashHex = notification.Metadata.LikeTxindexMetadata?.PostHashHex as string;
+                    if (this.state.posts[postHashHex]?.IsHidden) {
+                        return <></>;
+                    }
                     return <LikeNotificationComponent
                         post={this.state.posts[postHashHex]}
                         navigation={this.props.navigation}
@@ -368,6 +376,9 @@ export class NotificationsScreen extends React.Component<Props, State> {
                         profile={profile} />;
 
                 case NotificationType.CreatorCoinTransfer:
+                    if (this.state.posts[notification.Metadata.CreatorCoinTransferTxindexMetadata?.PostHashHex as string]?.IsHidden) {
+                        return <></>;
+                    }
                     return <CreatorCoinTransferNotificationComponent
                         profile={profile}
                         navigation={this.props.navigation}
@@ -514,7 +525,6 @@ export class NotificationsScreen extends React.Component<Props, State> {
                         windowSize={20}
                         refreshControl={renderRefresh}
                         ListFooterComponent={renderFooter}
-
                     />
                 </View>;
     }
