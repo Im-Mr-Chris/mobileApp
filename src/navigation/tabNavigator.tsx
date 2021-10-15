@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import { EmitterSubscription, Image, Keyboard, Platform, StyleSheet, View, SafeAreaView } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,7 +6,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
 import { eventManager, globals, hapticsManager, navigatorGlobals, settingsGlobals } from '@globals';
 import { themeStyles } from '@styles';
-import { cache } from '@services/dataCaching';
 import { EventType, FocusSearchHeaderEvent } from '@types';
 import HomeStackScreen from './homeStackNavigator';
 import ProfileStackScreen from './profileStackNavigator';
@@ -15,6 +14,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/core';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import SearchStackScreen from './searchStackNavigator';
+import { UserContext } from '@globals/userContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -27,13 +27,13 @@ const firstScreen: any = {
 };
 
 const TabElement = ({ tab, onPress, selectedTab }: any) => {
+
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
-    const [profilePic, setProfilePic] = useState('https://i.imgur.com/vZ2mB1W.png');
+    const { profilePic } = useContext(UserContext);
 
     let iconColor = themeStyles.fontColorMain.color;
     let icon;
-    const isMounted = useRef<boolean>(true);
 
     if (selectedTab === tab.name) {
         iconColor = '#4287f5';
@@ -55,26 +55,6 @@ const TabElement = ({ tab, onPress, selectedTab }: any) => {
             ]}
             source={{ uri: profilePic }} />;
     }
-
-    useEffect(
-        () => {
-
-            if (tab.name === 'ProfileStack') {
-                cache.user.getData().then(
-                    (user) => {
-                        if (isMounted && user.ProfileEntryResponse) {
-                            setProfilePic(user.ProfileEntryResponse.ProfilePic + '?' + new Date().toISOString());
-                        }
-                    }
-                );
-            }
-
-            return () => {
-                isMounted.current = false;
-            };
-        },
-        []
-    );
 
     function openProfileManager() {
         if (tab.name === 'ProfileStack' && !globals.readonly) {

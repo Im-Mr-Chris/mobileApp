@@ -32,6 +32,7 @@ import { Platform, StatusBar, View } from 'react-native';
 import { AppState } from 'react-native';
 import { messagesService } from './src/services/messagesServices';
 import PlaceBidFormComponent from '@screens/nft/components/placeBidForm.component';
+import { UserContext } from '@globals/userContext';
 import { Post, HiddenNFTType } from '@types';
 
 enableScreens();
@@ -46,6 +47,7 @@ export default function App(): JSX.Element {
   const [showProfileManager, setShowProfileManager] = useState(false);
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [showBiddingModal, setShowPlaceBiddingModal] = useState(false);
+  const [profilePic, setProfilePic] = useState<string>('https://i.imgur.com/vZ2mB1W.png');
   const [actionSheetConfig, setActionSheetConfig] = useState<ActionSheetConfig>();
   const [navigation, setNavigation] = useState<NavigationProp<ParamListBase>>();
   const [bidEdition, setBidEdition] = useState<BidEdition>();
@@ -220,6 +222,7 @@ export default function App(): JSX.Element {
       ]
     ).then(
       async p_responses => {
+
         setInvestorFeatures(p_responses[0]);
         setFollowerFeatures(p_responses[0]);
 
@@ -235,10 +238,12 @@ export default function App(): JSX.Element {
         globals.hiddenNFTType = type;
 
         if (globals.readonly === false) {
+          if (isMounted) {
+            setProfilePic(p_responses[0].ProfileEntryResponse?.ProfilePic + '?' + new Date().toISOString());
+          }
           notificationsService.registerPushToken().catch(() => undefined);
           notificationListener();
           globals.dispatchRefreshMessagesEvent();
-
           window.clearInterval(notificationsInterval.current);
           window.clearInterval(messagesInterval.current);
           notificationsInterval.current = window.setInterval(notificationListener, intervalTiming);
@@ -340,73 +345,75 @@ export default function App(): JSX.Element {
     return DefaultTheme;
   };
 
-  return <View style={[{ flex: 1 }, themeStyles.containerColorMain]}>
-    {
-      settingsGlobals.darkMode ?
-        Platform.OS == 'ios' ? <ExpoStatusBar style='light' /> :
-          <StatusBar barStyle={'light-content'} /> :
-        <ExpoStatusBar style='dark' />
-    }
+  return <UserContext.Provider value={{ profilePic, setProfilePic }}>
+    <View style={[{ flex: 1 }, themeStyles.containerColorMain]}>
+      {
+        settingsGlobals.darkMode ?
+          Platform.OS == 'ios' ? <ExpoStatusBar style='light' /> :
+            <StatusBar barStyle={'light-content'} /> :
+          <ExpoStatusBar style='dark' />
+      }
 
-    {
-      isLoading ?
-        isThemeSet ? <CloutFeedLoader /> : <></>
-        :
-        <NavigationContainer theme={handleTheme()}>
-          <Stack.Navigator
-            screenOptions={stackConfig}>
-            {
-              !isLoggedIn ?
-                areTermsAccepted ?
-                  <Stack.Screen
-                    options={{
-                      headerShown: false,
-                    }}
-                    name="LoginNavigator" component={LoginNavigator} />
+      {
+        isLoading ?
+          isThemeSet ? <CloutFeedLoader /> : <></>
+          :
+          <NavigationContainer theme={handleTheme()}>
+            <Stack.Navigator
+              screenOptions={stackConfig}>
+              {
+                !isLoggedIn ?
+                  areTermsAccepted ?
+                    <Stack.Screen
+                      options={{
+                        headerShown: false,
+                      }}
+                      name="LoginNavigator" component={LoginNavigator} />
+                    :
+                    <>
+                      <Stack.Screen options={{
+                        headerStyle: { elevation: 0, shadowRadius: 0, shadowOffset: { height: 0, width: 0 } },
+                        headerTitleStyle: { alignSelf: 'center', fontSize: 20 }
+                      }} name="Introduction" component={CloutFeedIntroduction} />
+                      <Stack.Screen options={{ headerShown: false }} name="TermsConditions" component={TermsConditionsScreen} />
+                    </>
                   :
-                  <>
-                    <Stack.Screen options={{
-                      headerStyle: { elevation: 0, shadowRadius: 0, shadowOffset: { height: 0, width: 0 } },
-                      headerTitleStyle: { alignSelf: 'center', fontSize: 20 }
-                    }} name="Introduction" component={CloutFeedIntroduction} />
-                    <Stack.Screen options={{ headerShown: false }} name="TermsConditions" component={TermsConditionsScreen} />
-                  </>
-                :
-                <React.Fragment>
-                  <Stack.Screen
-                    name="TabNavigator"
-                    component={TabNavigator}
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
+                  <React.Fragment>
+                    <Stack.Screen
+                      name="TabNavigator"
+                      component={TabNavigator}
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
 
-                  <Stack.Screen
-                    name="MessageStack"
-                    component={MessageStackScreen}
-                    options={{
-                      headerShown: false,
-                    }}
-                  />
-                </React.Fragment>
+                    <Stack.Screen
+                      name="MessageStack"
+                      component={MessageStackScreen}
+                      options={{
+                        headerShown: false,
+                      }}
+                    />
+                  </React.Fragment>
+              }
+            </Stack.Navigator >
+            <DiamondAnimationComponent />
+            {showActionSheet && actionSheetConfig && <ActionSheet config={actionSheetConfig} />}
+            <SnackbarComponent />
+            {
+              showProfileManager ?
+                <ProfileManagerComponent navigation={navigation as StackNavigationProp<ParamListBase>}></ProfileManagerComponent> : undefined
             }
-          </Stack.Navigator >
-          <DiamondAnimationComponent />
-          {showActionSheet && actionSheetConfig && <ActionSheet config={actionSheetConfig} />}
-          <SnackbarComponent />
-          {
-            showProfileManager ?
-              <ProfileManagerComponent navigation={navigation as StackNavigationProp<ParamListBase>}></ProfileManagerComponent> : undefined
-          }
-          {
-            showProfileInfo && <ProfileInfoModalComponent
-              navigation={navigation as any}
-              profile={profile as Profile}
-              coinPrice={coinPrice as number}
-            />
-          }
-          {showBiddingModal && <PlaceBidFormComponent bidEdition={bidEdition as BidEdition} post={bidPost} />}
-        </NavigationContainer>
-    }
-  </View>;
+            {
+              showProfileInfo && <ProfileInfoModalComponent
+                navigation={navigation as any}
+                profile={profile as Profile}
+                coinPrice={coinPrice as number}
+              />
+            }
+            {showBiddingModal && <PlaceBidFormComponent bidEdition={bidEdition as BidEdition} post={bidPost} />}
+          </NavigationContainer>
+      }
+    </View>
+  </UserContext.Provider>;
 }

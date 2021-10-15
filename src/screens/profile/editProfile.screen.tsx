@@ -12,6 +12,7 @@ import { signing } from '@services/authorization/signing';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import CloutFeedButton from '@components/cloutfeedButton.component';
 import { ParamListBase } from '@react-navigation/native';
+import { UserContext } from '@globals/userContext';
 import * as FileSystem from 'expo-file-system';
 
 interface Props {
@@ -29,6 +30,8 @@ interface State {
 export class EditProfileScreen extends Component<Props, State> {
 
     private _isMounted = false;
+
+    static contextType = UserContext;
 
     constructor(props: Props) {
         super(props);
@@ -135,6 +138,7 @@ export class EditProfileScreen extends Component<Props, State> {
                         }
                     }
                 );
+                this.context.setProfilePic(this.state.profilePic);
             }
         ).catch(
             p_error => {
