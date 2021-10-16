@@ -372,8 +372,8 @@ export default function App(): JSX.Element {
                     :
                     <>
                       <Stack.Screen options={{
-                        headerStyle: { elevation: 0, shadowRadius: 0, shadowOffset: { height: 0, width: 0 } },
-                        headerTitleStyle: { alignSelf: 'center', fontSize: 20 }
+                        headerStyle: { backgroundColor: 'white', elevation: 0, shadowRadius: 0, shadowOffset: { height: 0, width: 0 } },
+                        headerTitleStyle: { alignSelf: 'center', fontSize: 20, color: 'black' }
                       }} name="Introduction" component={CloutFeedIntroduction} />
                       <Stack.Screen options={{ headerShown: false }} name="TermsConditions" component={TermsConditionsScreen} />
                     </>
