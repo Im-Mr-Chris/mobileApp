@@ -48,7 +48,6 @@ export function PostScreen({ route, navigation }: any) {
             ];
             setSections(sections);
         }
-
         route.params.newComment = undefined;
     }
 
@@ -65,7 +64,7 @@ export function PostScreen({ route, navigation }: any) {
                 ).catch(() => navigation.goBack());
 
             } else {
-                api.getSinglePost(globals.user.publicKey, postHashHex, false, 0, 20).then(
+                api.getSinglePost(globals.user.publicKey, postHashHex, route.params?.showThread, 0, 20).then(
                     p_postResponse => {
                         setPostData(p_postResponse);
                     }

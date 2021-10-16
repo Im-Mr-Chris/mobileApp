@@ -238,7 +238,8 @@ export class NotificationsScreen extends React.Component<Props, State> {
         try {
             this.props.navigation.navigate('Post', {
                 postHashHex: postHashHex,
-                priorityComment: priorityComment
+                priorityComment: priorityComment,
+                showThread: true
             });
         } catch {
             alert('Something went wrong! Please try again.');

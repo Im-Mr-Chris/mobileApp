@@ -27,6 +27,7 @@ interface Props {
     isParentPost?: boolean;
     isPinned?: boolean;
     isPostScreen?: boolean;
+    showThread?: boolean;
 }
 
 interface State {
@@ -130,7 +131,8 @@ export class PostComponent extends React.Component<Props, State> {
                 'Post',
                 {
                     postHashHex: this.props.post.PostHashHex,
-                    key: 'Post_' + this.props.post.PostHashHex
+                    key: 'Post_' + this.props.post.PostHashHex,
+                    showThread: this.props.showThread
                 }
             );
         }
@@ -142,7 +144,8 @@ export class PostComponent extends React.Component<Props, State> {
                 'Post',
                 {
                     postHashHex: this.props.post.RepostedPostEntryResponse.PostHashHex,
-                    key: 'Post_' + this.props.post.RepostedPostEntryResponse.PostHashHex
+                    key: 'Post_' + this.props.post.RepostedPostEntryResponse.PostHashHex,
+                    showThread: this.props.showThread
                 }
             );
         }
@@ -335,6 +338,7 @@ export class PostComponent extends React.Component<Props, State> {
                                 <TouchableOpacity onPress={() => this.goToRecloutedPost()} activeOpacity={1}>
                                     <PostComponent
                                         isPostScreen={this.props.isPostScreen}
+                                        showThread={true}
                                         navigation={this.props.navigation}
                                         route={this.props.route}
                                         post={this.props.post.RepostedPostEntryResponse}
