@@ -22,6 +22,12 @@ export function calculateDurationUntilNow(p_timeStampNanoSeconds: number): strin
 
 export function getAnonymousProfile(p_publicKey: string) {
     const profile = {
+        CoinEntry: {
+            CoinWatermarkNanos: 0,
+            CoinsInCirculationNanos: 0,
+            CreatorBasisPoints: 0,
+            DeSoLockedNanos: 0
+        },
         Username: 'anonymous',
         PublicKeyBase58Check: p_publicKey,
         Description: '',

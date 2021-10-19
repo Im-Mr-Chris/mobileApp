@@ -249,6 +249,7 @@ export class ProfileCard extends React.Component<Props, State> {
                     <TouchableOpacity
                         style={styles.infoButton}
                         activeOpacity={1}
+                        disabled={this.state.followersNumber != null ? false : true}
                         onPress={() => this.goToFollowersScreen('Followers')}>
                         <Text style={[styles.infoTextLabel, themeStyles.fontColorSub]}>Followers</Text>
                         {
@@ -266,6 +267,7 @@ export class ProfileCard extends React.Component<Props, State> {
                     <TouchableOpacity
                         style={styles.infoButton}
                         activeOpacity={1}
+                        disabled={this.state.followingNumber != null ? false : true}
                         onPress={() => this.goToFollowersScreen('Following')}>
                         <Text style={[styles.infoTextLabel, themeStyles.fontColorSub]}>Following</Text>
                         {
