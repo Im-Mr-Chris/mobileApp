@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity, Text, Image, Keyboard, Alert } from 'react-native';
+import { View, StyleSheet, TextInput, TouchableOpacity, Text, Image, Keyboard, Alert, Linking, ScrollView } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as Clipboard from 'expo-clipboard';
 import { constants, globals } from '@globals';
@@ -120,7 +120,11 @@ export function LoginScreen({ navigation }: any) {
         }
     }
 
-    return (
+    function goToSignup(): void {
+        Linking.openURL('https://diamondapp.com/');
+    }
+
+    return <ScrollView contentContainerStyle={styles.contentContainerStyle}>
         <View style={styles.container}>
             <Image style={[styles.logo, { height: isLogoVisible ? 120 : 0 }]} source={require('../../../assets/icon-black.png')}></Image>
             <Text style={styles.title}>CloutFeed</Text>
@@ -187,8 +191,12 @@ export function LoginScreen({ navigation }: any) {
                         </TouchableOpacity>
                     </View>
             }
+            <Text style={[styles.modeText, styles.linkText]}>
+                New to DeSo?
+                <Text style={styles.signupText} onPress={goToSignup}> Sign up</Text>
+            </Text>
         </View>
-    );
+    </ScrollView>;
 }
 
 const styles = StyleSheet.create({
@@ -196,6 +204,11 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#121212',
         alignItems: 'center'
+    },
+    contentContainerStyle: {
+        flexGrow: 1,
+        backgroundColor: '#121212',
+        paddingBottom: 20,
     },
     input: {
         borderWidth: 1,
@@ -259,5 +272,14 @@ const styles = StyleSheet.create({
     backButton: {
         paddingLeft: 20,
         paddingRight: 20
+    },
+    linkText: {
+        marginTop: '12%',
+        fontSize: 16,
+    },
+    signupText: {
+        alignSelf: 'flex-end',
+        fontWeight: 'bold',
+        color: 'white'
     }
 });
