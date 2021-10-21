@@ -16,7 +16,8 @@ export enum EventType {
     ToggleBidForm = 14,
     ToggleSetSelectedNfts = 15,
     BroadcastMessage = 16,
-    ToggleHideNFTs = 17
+    ToggleHideNFTs = 17,
+    ToggleHideCoinPrice = 19
 }
 
 export enum DiscoveryType {

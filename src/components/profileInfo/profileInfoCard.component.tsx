@@ -6,9 +6,10 @@ import ProfileInfoUsernameComponent from './profileInfoUsername.component';
 import CoinPriceComponent from './coinPrice.component';
 import { Ionicons } from '@expo/vector-icons';
 import { calculateAndFormatDeSoInUsd } from '@services/deSoCalculator';
-import { Profile } from '@types';
+import { EventType, Profile, ToggleHideCoinPriceEvent } from '@types';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
+import { eventManager, globals } from '@globals';
 
 interface Props {
     profile: Profile;
@@ -21,15 +22,47 @@ interface Props {
     noCoinPrice?: boolean;
 }
 
-export default class ProfileInfoCardComponent extends React.Component<Props> {
+interface State {
+    isCoinPriceHidden: boolean;
+}
+
+export default class ProfileInfoCardComponent extends React.Component<Props, State> {
+
+    private _isMounted = false;
+
+    private _unsubscribeHideCoinPriceEvent: () => void = () => undefined;
 
     constructor(props: Props) {
         super(props);
+
+        this.state = {
+            isCoinPriceHidden: globals.isCoinPriceHidden
+        };
+
+        this.subscribeToggleHideCoinPrice();
     }
 
-    shouldComponentUpdate(nextProps: Props): boolean {
-        return this.props.profile !== nextProps.profile ||
-            this.props.duration !== nextProps.duration;
+    componentDidMount(): void {
+        this._isMounted = true;
+    }
+
+    componentWillUnmount(): void {
+        this._unsubscribeHideCoinPriceEvent();
+    }
+
+    private subscribeToggleHideCoinPrice(): void {
+        this._unsubscribeHideCoinPriceEvent = eventManager.addEventListener(
+            EventType.ToggleHideCoinPrice,
+            (event: ToggleHideCoinPriceEvent) => {
+                if (this._isMounted) {
+                    this.setState(
+                        {
+                            isCoinPriceHidden: event.hidden
+                        }
+                    );
+                }
+            }
+        );
     }
 
     render(): JSX.Element {
@@ -52,6 +85,7 @@ export default class ProfileInfoCardComponent extends React.Component<Props> {
                 <View style={styles.bottomRow}>
                     {
                         !this.props.noCoinPrice &&
+                        !this.state.isCoinPriceHidden &&
                         <CoinPriceComponent
                             isDarkMode={this.props.ìsDarkMode}
                             isProfileManager={this.props.isProfileManager}

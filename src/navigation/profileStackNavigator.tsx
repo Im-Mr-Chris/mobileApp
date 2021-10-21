@@ -15,7 +15,7 @@ import { stackConfig } from './stackNavigationConfig';
 import HapticsScreen from '@screens/settings/haptics.screen';
 import NotificationsSettingsScreen from '@screens/settings/notificationsSettings.screen';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
-import { FeedSettingsScreen } from '@screens/feedSettings.screen';
+import { PreferencesScreen } from '@screens/preferences.screen';
 import { SharedStackScreens } from './sharedStackScreens';
 
 const ProfileStack = createStackNavigator();
@@ -121,11 +121,11 @@ export default function ProfileStackScreen() {
         />
         <ProfileStack.Screen
             options={{
-                headerTitle: 'Feed Settings',
+                headerTitle: 'Preferences',
                 headerBackTitle: ' ',
             }}
-            name="FeedSettings"
-            component={FeedSettingsScreen}
+            name="Preferences"
+            component={PreferencesScreen}
         />
 
         <ProfileStack.Screen

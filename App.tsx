@@ -234,8 +234,12 @@ export default function App(): JSX.Element {
         const typeKey = globals.user.publicKey + constants.localStorage_hiddenNFTType;
         const type = await SecureStore.getItemAsync(typeKey).catch(() => undefined) as HiddenNFTType;
 
+        const coinPriceKey = globals.user.publicKey + constants.localStorage_coinPriceHidden;
+        const isCoinPriceHidden = await SecureStore.getItemAsync(coinPriceKey).catch(() => undefined);
+
         globals.areNFTsHidden = areNFTsHidden === 'true';
         globals.hiddenNFTType = type;
+        globals.isCoinPriceHidden = isCoinPriceHidden === 'true';
 
         if (globals.readonly === false) {
           if (isMounted) {

@@ -36,9 +36,9 @@ export function SettingsScreen({ navigation }: Props) {
             action: () => navigation.navigate('HapticsSettings')
         },
         {
-            title: 'Feed',
-            icon: <MaterialCommunityIcons name="lightning-bolt-outline" size={24} color={themeStyles.fontColorMain.color} />,
-            action: () => navigation.navigate('FeedSettings')
+            title: 'Preferences',
+            icon: <Ionicons name="options-outline" size={24} color={themeStyles.fontColorMain.color} />,
+            action: () => navigation.navigate('Preferences')
         },
         {
             title: 'Saved Posts',

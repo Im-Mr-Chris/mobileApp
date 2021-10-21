@@ -63,3 +63,7 @@ export interface ToggleProfileInfoModalEvent {
 export interface ToggleSellNftModalEvent {
     selectedNftsForSale: Post[]
 }
+
+export interface ToggleHideCoinPriceEvent {
+    hidden: boolean;
+}

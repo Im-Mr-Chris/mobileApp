@@ -1,23 +1,24 @@
 import React from 'react';
-import { View, StyleSheet, Text, Switch } from 'react-native';
+import { View, StyleSheet, Text, Switch, ScrollView } from 'react-native';
 import { themeStyles } from '@styles';
 import { SelectListControl } from '@controls/selectList.control';
 import * as SecureStore from 'expo-secure-store';
 import { constants } from '@globals/constants';
 import { globals } from '@globals/globals';
 import { eventManager } from '@globals/injector';
-import { EventType, FeedType, HiddenNFTType, ToggleCloutCastFeedEvent, ToggleHideNFTsEvent } from '@types';
+import { EventType, FeedType, HiddenNFTType, ToggleCloutCastFeedEvent, ToggleHideCoinPriceEvent, ToggleHideNFTsEvent } from '@types';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 
 interface State {
     isLoading: boolean;
     isCloutCastEnabled: boolean;
+    isCoinPriceHidden: boolean;
     areNFTsHidden: boolean;
     hiddenNFTType: HiddenNFTType;
     feed: FeedType;
 }
 
-export class FeedSettingsScreen extends React.Component<Record<string, never>, State>{
+export class PreferencesScreen extends React.Component<Record<string, never>, State>{
 
     private _isMounted = false;
 
@@ -29,11 +30,13 @@ export class FeedSettingsScreen extends React.Component<Record<string, never>, S
             isCloutCastEnabled: true,
             feed: FeedType.Global,
             areNFTsHidden: false,
+            isCoinPriceHidden: false,
             hiddenNFTType: HiddenNFTType.Details
         };
 
         this.toggleCloutCastFeed = this.toggleCloutCastFeed.bind(this);
         this.onFeedTypeChange = this.onFeedTypeChange.bind(this);
+        this.toggleCoinPrice = this.toggleCoinPrice.bind(this);
         this.initScreen();
     }
 
@@ -80,6 +83,17 @@ export class FeedSettingsScreen extends React.Component<Record<string, never>, S
 
     }
 
+    private async toggleCoinPrice(): Promise<void> {
+        const newValue = !this.state.isCoinPriceHidden;
+        this.setState({ isCoinPriceHidden: newValue });
+        globals.isCoinPriceHidden = newValue;
+
+        const event: ToggleHideCoinPriceEvent = { hidden: newValue };
+        eventManager.dispatchEvent(EventType.ToggleHideCoinPrice, event);
+        const key = globals.user.publicKey + constants.localStorage_coinPriceHidden;
+        await SecureStore.setItemAsync(key, String(newValue)).catch(() => undefined);
+    }
+
     private onFeedTypeChange(type: FeedType): void {
         this.setState({ feed: type });
 
@@ -112,11 +126,15 @@ export class FeedSettingsScreen extends React.Component<Record<string, never>, S
         const nftKey = globals.user.publicKey + constants.localStorage_nftsHidden;
         const areNFTsHidden = await SecureStore.getItemAsync(nftKey).catch(() => undefined);
 
+        const coinPriceKey = globals.user.publicKey + constants.localStorage_coinPriceHidden;
+        const isCoinPriceHidden = await SecureStore.getItemAsync(coinPriceKey).catch(() => undefined);
+
         if (this._isMounted) {
             this.setState(
                 {
                     isCloutCastEnabled: isCloutCastEnabledString === 'true',
                     areNFTsHidden: areNFTsHidden === 'true',
+                    isCoinPriceHidden: isCoinPriceHidden === 'true',
                     feed: feed ? feed : FeedType.Global,
                     hiddenNFTType: hiddenNFTType ? hiddenNFTType : HiddenNFTType.Details,
                     isLoading: false,
@@ -131,81 +149,92 @@ export class FeedSettingsScreen extends React.Component<Record<string, never>, S
             return <CloutFeedLoader />;
         }
 
-        return <View style={[styles.container, themeStyles.containerColorMain]} >
-            <View style={themeStyles.containerColorMain}>
-                {
-                    globals.readonly ? undefined :
-                        <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
-                            <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>CloutCast Feed</Text>
-                            <Switch
-                                trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
-                                thumbColor={'white'}
-                                ios_backgroundColor={themeStyles.switchColor.color}
-                                onValueChange={() => this.toggleCloutCastFeed()}
-                                value={this.state.isCloutCastEnabled}
-                            />
-                        </View>
-                }
-                {
-                    globals.readonly ? undefined :
-                        <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
-                            <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Hide NFTs</Text>
-                            <Switch
-                                trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
-                                thumbColor={'white'}
-                                ios_backgroundColor={themeStyles.switchColor.color}
-                                onValueChange={() => this.toggleHideNFTOption()}
-                                value={this.state.areNFTsHidden}
-                            />
-                        </View>
-                }
-                {
-                    this.state.areNFTsHidden &&
-                    <SelectListControl
-                        style={[styles.selectList, themeStyles.borderColor]}
-                        options={[
-                            {
-                                name: 'Only hide NFT details',
-                                value: HiddenNFTType.Details
-                            },
-                            {
-
-                                name: 'Hide posts completely',
-                                value: HiddenNFTType.Posts
-                            },
-                        ]}
-                        value={this.state.hiddenNFTType}
-                        onValueChange={(value: string | string[]) => this.onHiddenNFTTypeChange(value as HiddenNFTType)}
-                    />
-                }
-                <View>
-                    <Text style={[styles.defaultFeedTitle, themeStyles.fontColorMain]}>Default Feed</Text>
-                </View>
+        return <ScrollView style={[themeStyles.containerColorMain, styles.container]}>
+            {
+                globals.readonly ? undefined :
+                    <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
+                        <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>CloutCast Feed</Text>
+                        <Switch
+                            trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
+                            thumbColor={'white'}
+                            ios_backgroundColor={themeStyles.switchColor.color}
+                            onValueChange={() => this.toggleCloutCastFeed()}
+                            value={this.state.isCloutCastEnabled}
+                        />
+                    </View>
+            }
+            {
+                globals.readonly ? undefined :
+                    <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
+                        <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Hide Coin Price</Text>
+                        <Switch
+                            trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
+                            thumbColor={'white'}
+                            ios_backgroundColor={themeStyles.switchColor.color}
+                            onValueChange={this.toggleCoinPrice}
+                            value={this.state.isCoinPriceHidden}
+                        />
+                    </View>
+            }
+            {
+                globals.readonly ? undefined :
+                    <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
+                        <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Hide NFTs</Text>
+                        <Switch
+                            trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
+                            thumbColor={'white'}
+                            ios_backgroundColor={themeStyles.switchColor.color}
+                            onValueChange={() => this.toggleHideNFTOption()}
+                            value={this.state.areNFTsHidden}
+                        />
+                    </View>
+            }
+            {
+                this.state.areNFTsHidden &&
                 <SelectListControl
                     style={[styles.selectList, themeStyles.borderColor]}
                     options={[
                         {
-                            name: 'Hot',
-                            value: FeedType.Hot
+                            name: 'Only hide NFT details',
+                            value: HiddenNFTType.Details
                         },
                         {
-                            name: 'Global',
-                            value: FeedType.Global
+
+                            name: 'Hide posts completely',
+                            value: HiddenNFTType.Posts
                         },
-                        {
-                            name: 'Following',
-                            value: FeedType.Following
-                        },
-                        {
-                            name: 'Recent',
-                            value: FeedType.Recent
-                        }
                     ]}
-                    value={this.state.feed}
-                    onValueChange={(value: string | string[]) => this.onFeedTypeChange(value as FeedType)}
+                    value={this.state.hiddenNFTType}
+                    onValueChange={(value: string | string[]) => this.onHiddenNFTTypeChange(value as HiddenNFTType)}
                 />
+            }
+            <View>
+                <Text style={[styles.defaultFeedTitle, themeStyles.fontColorMain]}>Default Feed</Text>
             </View>
-        </View>;
+            <SelectListControl
+                style={[styles.selectList, themeStyles.borderColor]}
+                options={[
+                    {
+                        name: 'Hot',
+                        value: FeedType.Hot
+                    },
+                    {
+                        name: 'Global',
+                        value: FeedType.Global
+                    },
+                    {
+                        name: 'Following',
+                        value: FeedType.Following
+                    },
+                    {
+                        name: 'Recent',
+                        value: FeedType.Recent
+                    }
+                ]}
+                value={this.state.feed}
+                onValueChange={(value: string | string[]) => this.onFeedTypeChange(value as FeedType)}
+            />
+        </ScrollView>;
     }
 }
 

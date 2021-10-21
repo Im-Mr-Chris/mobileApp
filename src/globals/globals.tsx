@@ -34,5 +34,6 @@ export const globals = {
     dispatchRefreshMessagesEvent: () => { 0; },
     checkedInitialRoute: false,
     areNFTsHidden: false,
-    hiddenNFTType: HiddenNFTType.None
+    hiddenNFTType: HiddenNFTType.None,
+    isCoinPriceHidden: false
 };

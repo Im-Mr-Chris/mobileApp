@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Animated } from 'react-native';
-import { EventType, HiddenNFTType, Post, ToggleHideNFTsEvent } from '@types';
+import { EventType, HiddenNFTType, Post, ToggleHideCoinPriceEvent, ToggleHideNFTsEvent } from '@types';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { ImageGalleryComponent } from '../imageGallery.component';
@@ -37,6 +37,7 @@ interface State {
     isHeartShowed: boolean;
     hiddenNFTType: HiddenNFTType;
     areNFTsHidden: boolean;
+    isCoinPriceHidden: boolean;
 }
 
 export class PostComponent extends React.Component<Props, State> {
@@ -48,6 +49,8 @@ export class PostComponent extends React.Component<Props, State> {
     private _outputRange = [0, 1.3];
 
     private _unsubscribeHideNFTsEvent: () => void = () => undefined;
+
+    private _unsubscribeHideCoinPriceEvent: () => void = () => undefined;
 
     private _scale = this._animation.interpolate({
         inputRange: this._inputRange,
@@ -67,6 +70,7 @@ export class PostComponent extends React.Component<Props, State> {
             isHeartShowed: false,
             hiddenNFTType: HiddenNFTType.None,
             areNFTsHidden: false,
+            isCoinPriceHidden: globals.isCoinPriceHidden
         };
 
         if (this.props.post.ImageURLs?.length > 0) {
@@ -108,10 +112,12 @@ export class PostComponent extends React.Component<Props, State> {
         this.toggleHeartIcon = this.toggleHeartIcon.bind(this);
 
         this.subscribeToggleHideNFTOptions();
+        this.subscribeToggleHideCoinPrice();
     }
 
     componentWillUnmount(): void {
         this._unsubscribeHideNFTsEvent();
+        this._unsubscribeHideCoinPriceEvent();
     }
 
     private goToStats(): void {
@@ -211,6 +217,19 @@ export class PostComponent extends React.Component<Props, State> {
         );
     }
 
+    private subscribeToggleHideCoinPrice(): void {
+        this._unsubscribeHideCoinPriceEvent = eventManager.addEventListener(
+            EventType.ToggleHideCoinPrice,
+            (event: ToggleHideCoinPriceEvent) => {
+                this.setState(
+                    {
+                        isCoinPriceHidden: event.hidden
+                    }
+                );
+            }
+        );
+    }
+
     render(): JSX.Element {
 
         const bodyText = this.props.post.Body?.trimEnd();
@@ -289,11 +308,14 @@ export class PostComponent extends React.Component<Props, State> {
                                         <Entypo style={styles.pinIcon} name="pin" size={16} color={themeStyles.fontColorMain.color} />
                                     }
 
-                                    <View style={[styles.coinPriceContainer, themeStyles.chipColor]}>
-                                        <Text style={[styles.coinPriceText, themeStyles.fontColorMain]}>
-                                            ${this.state.coinPrice}
-                                        </Text>
-                                    </View>
+                                    {
+                                        !this.state.isCoinPriceHidden &&
+                                        <View style={[styles.coinPriceContainer, themeStyles.chipColor]}>
+                                            <Text style={[styles.coinPriceText, themeStyles.fontColorMain]}>
+                                                ${this.state.coinPrice}
+                                            </Text>
+                                        </View>
+                                    }
 
                                     {
                                         !this.state.actionsDisabled &&
