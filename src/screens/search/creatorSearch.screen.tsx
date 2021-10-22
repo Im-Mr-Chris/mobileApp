@@ -9,8 +9,8 @@ import { ParamListBase } from '@react-navigation/native';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { updateSearchHistory } from './services/helpers';
 import ProfileHistoryCardComponent from './components/profileHistoryCard.component';
+import { updateSearchHistory } from './services/searchHistoryHelpers';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
