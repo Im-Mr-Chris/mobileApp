@@ -20,6 +20,7 @@ interface Props {
     navigation: StackNavigationProp<ParamListBase>;
     peekDisabled?: boolean;
     noCoinPrice?: boolean;
+    historyEnabled?: boolean;
 }
 
 interface State {
@@ -69,6 +70,7 @@ export default class ProfileInfoCardComponent extends React.Component<Props, Sta
         const coinPrice = calculateAndFormatDeSoInUsd(this.props.profile?.CoinPriceDeSoNanos);
         return <View style={styles.container}>
             <ProfileInfoImageComponent
+                historyEnabled={true}
                 peekDisabled={this.props.peekDisabled}
                 navigation={this.props.navigation}
                 profile={this.props.profile}
@@ -76,6 +78,7 @@ export default class ProfileInfoCardComponent extends React.Component<Props, Sta
             />
             <View>
                 <ProfileInfoUsernameComponent
+                    historyEnabled={true}
                     peekDisabled={this.props.peekDisabled}
                     navigation={this.props.navigation}
                     isDarkMode={this.props.ìsDarkMode}

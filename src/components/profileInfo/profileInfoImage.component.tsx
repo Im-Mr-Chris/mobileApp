@@ -1,16 +1,18 @@
 import React from 'react';
 import { StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { api, calculateDeSoInUSD } from '@services';
-import { EventType, Profile } from '@types';
+import { EventType, Profile, SearchHistoryProfile } from '@types';
 import { eventManager, hapticsManager } from '@globals/injector';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
+import { updateSearchHistory } from '@screens/search/services/searchHistoryHelpers';
 
 interface Props {
     imageSize?: number;
     profile: Profile;
     navigation: StackNavigationProp<ParamListBase>;
     peekDisabled?: boolean;
+    historyEnabled?: boolean;
 }
 
 interface State {
@@ -61,6 +63,16 @@ export default class ProfileInfoImageComponent extends React.Component<Props, St
         if (this.props.peekDisabled) {
             return;
         }
+        if (this.props.historyEnabled) {
+            const newProfile: SearchHistoryProfile = {
+                Username: this.props.profile.Username,
+                PublicKeyBase58Check: this.props.profile.PublicKeyBase58Check,
+                IsVerified: this.props.profile.IsVerified,
+                ProfilePic: api.getSingleProfileImage(this.props.profile.PublicKeyBase58Check)
+            };
+            updateSearchHistory(newProfile);
+        }
+
         if (this.props.profile &&
             this.props.profile?.Username !== 'anonymous') {
             this.props.navigation.push(

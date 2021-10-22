@@ -213,3 +213,10 @@ export interface BidEdition {
     OwnerPublicKeyBase58Check: string;
     SerialNumber: number;
 }
+
+export interface SearchHistoryProfile {
+    Username: string;
+    IsVerified: boolean;
+    ProfilePic: string;
+    PublicKeyBase58Check: string;
+}

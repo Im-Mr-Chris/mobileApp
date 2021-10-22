@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Dimensions, StyleSheet, TextInput, View, Text } from 'react-native';
+import { Dimensions, StyleSheet, TextInput, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { themeStyles } from '@styles';
 import { eventManager, navigatorGlobals, settingsGlobals } from '@globals';
@@ -8,6 +8,7 @@ import { EventType, FocusSearchHeaderEvent } from '@types';
 export function SearchHeaderComponent() {
     const textInput = useRef<TextInput>(null);
     const [searchValue, setSearchValue] = useState<string>('');
+    const [showCancelButton, setShowCancelButton] = useState<boolean>(false);
 
     function changeInputState(focused: boolean) {
         const event: FocusSearchHeaderEvent = {
@@ -17,9 +18,17 @@ export function SearchHeaderComponent() {
         eventManager.dispatchEvent(EventType.FocusSearchHeader, event);
 
         if (!focused) {
+            setShowCancelButton(false);
             textInput?.current?.blur();
             setSearchValue('');
+        } else {
+            setShowCancelButton(true);
         }
+    }
+
+    function clearSearchResult(): void {
+        setSearchValue('');
+        navigatorGlobals.searchResults('');
     }
 
     return <View style={styles.container}>
@@ -37,10 +46,21 @@ export function SearchHeaderComponent() {
                 keyboardAppearance={settingsGlobals.darkMode ? 'dark' : 'light'}
                 onFocus={() => changeInputState(true)}
             />
+            {
+                searchValue.length > 0 &&
+                <TouchableOpacity onPress={clearSearchResult} activeOpacity={1}>
+                    <Ionicons name="close-circle-sharp" size={17} color={themeStyles.fontColorMain.color} />
+                </TouchableOpacity>
+            }
         </View>
-        <Text
-            style={[styles.cancelText, themeStyles.fontColorMain]}
-            onPress={() => changeInputState(false)}>Cancel</Text>
+        {
+            showCancelButton &&
+            <Text
+                style={[styles.cancelText, themeStyles.fontColorMain]}
+                onPress={() => changeInputState(false)} >
+                Cancel
+            </Text>
+        }
     </View>;
 }
 

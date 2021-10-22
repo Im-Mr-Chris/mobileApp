@@ -1,39 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { Profile } from '../types';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { themeStyles } from '@styles';
 import { constants, globals } from '@globals';
-import { api, cache, calculateAndFormatDeSoInUsd } from '@services';
+import { api, cache } from '@services';
 import { signing } from '@services/authorization/signing';
 import CloutFeedButton from '@components/cloutfeedButton.component';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { SearchHistoryProfile } from '@types';
 
-export function ProfileListCardComponent({ profile, isFollowing }:
-    { profile: Profile, isFollowing: boolean }): JSX.Element {
+export function ProfileListCardComponent({ profile, isFollowing, handleSearchHistory }:
+    { profile: Profile, isFollowing: boolean, handleSearchHistory?: (profile: SearchHistoryProfile) => void }): JSX.Element {
 
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
-    const [profileCoinPrice, setProfileCoinPrice] = useState('');
     const [working, setWorking] = useState(false);
     const [following, setFollowing] = useState(false);
     const [showFollowButton, setShowFollowButton] = useState(false);
 
-    let mount = true;
+    const isMounted = useRef<boolean>(true);
 
     useEffect(
         () => {
-            const coinPrice = calculateAndFormatDeSoInUsd(profile.CoinPriceDeSoNanos);
-
-            if (mount) {
+            if (isMounted.current) {
                 setShowFollowButton(profile.PublicKeyBase58Check !== globals.user.publicKey);
                 setFollowing(isFollowing);
-                setProfileCoinPrice(coinPrice);
             }
 
             return () => {
-                mount = false;
+                isMounted.current = false;
             };
         },
         []
@@ -52,11 +49,11 @@ export function ProfileListCardComponent({ profile, isFollowing }:
                 const signedTransactionHex = await signing.signTransaction(transactionHex);
                 await api.submitTransaction(signedTransactionHex);
 
-                if (mount) {
+                if (isMounted.current) {
                     setFollowing((p_previous) => !p_previous);
                 }
 
-                if (following) {
+                if (isMounted.current) {
                     cache.removeFollower(profile.PublicKeyBase58Check);
                 } else {
                     cache.addFollower(profile.PublicKeyBase58Check);
@@ -66,15 +63,24 @@ export function ProfileListCardComponent({ profile, isFollowing }:
             p_error => globals.defaultHandleError(p_error)
         ).finally(
             () => {
-                if (mount) {
+                if (isMounted.current) {
                     setWorking(false);
                 }
             }
         );
     }
 
-    function goToProfile() {
+    function goToProfile(): void {
         if (profile.Username !== 'anonymous') {
+            if (handleSearchHistory) {
+                const newProfile: SearchHistoryProfile = {
+                    Username: profile.Username,
+                    PublicKeyBase58Check: profile.PublicKeyBase58Check,
+                    IsVerified: profile.IsVerified,
+                    ProfilePic: api.getSingleProfileImage(profile.PublicKeyBase58Check)
+                };
+                handleSearchHistory(newProfile);
+            }
             navigation.push(
                 'UserProfile',
                 {
@@ -89,6 +95,7 @@ export function ProfileListCardComponent({ profile, isFollowing }:
     return <TouchableOpacity onPress={goToProfile} activeOpacity={1}>
         <View style={[styles.profileListCard, themeStyles.containerColorMain]}>
             <ProfileInfoCardComponent
+                historyEnabled={true}
                 profile={profile}
                 navigation={navigation}
             />
