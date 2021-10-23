@@ -64,6 +64,10 @@ export interface ToggleSellNftModalEvent {
     selectedNftsForSale: Post[]
 }
 
+export interface ToggleRefreshDraftPostsEvent {
+    draftPosts: Post[];
+}
+
 export interface ToggleHideCoinPriceEvent {
     hidden: boolean;
 }

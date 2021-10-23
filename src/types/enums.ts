@@ -17,6 +17,7 @@ export enum EventType {
     ToggleSetSelectedNfts = 15,
     BroadcastMessage = 16,
     ToggleHideNFTs = 17,
+    ToggleRefreshDraftPosts = 18,
     ToggleHideCoinPrice = 19
 }
 

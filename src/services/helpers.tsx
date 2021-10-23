@@ -66,3 +66,12 @@ export function isNumber(p_value: any) {
     return !isNaN(p_value) &&
         !isNaN(parseFloat(p_value));
 }
+
+export function generatePostHashHex(): string {
+    let result = '';
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 64; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}

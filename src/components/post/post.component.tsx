@@ -27,6 +27,7 @@ interface Props {
     isParentPost?: boolean;
     isPinned?: boolean;
     isPostScreen?: boolean;
+    isDraftPost?: boolean;
     showThread?: boolean;
 }
 
@@ -60,8 +61,9 @@ export class PostComponent extends React.Component<Props, State> {
     constructor(p_props: Props) {
         super(p_props);
 
-        const coinPrice = calculateAndFormatDeSoInUsd(this.props.post.ProfileEntryResponse.CoinPriceDeSoNanos);
-        const durationUntilNow = calculateDurationUntilNow(this.props.post.TimestampNanos);
+        const coinPrice = calculateAndFormatDeSoInUsd(this.props.post.ProfileEntryResponse?.CoinPriceDeSoNanos);
+
+        const durationUntilNow = calculateDurationUntilNow(this.props.post?.TimestampNanos);
 
         this.state = {
             coinPrice,
@@ -73,7 +75,7 @@ export class PostComponent extends React.Component<Props, State> {
             isCoinPriceHidden: globals.isCoinPriceHidden
         };
 
-        if (this.props.post.ImageURLs?.length > 0) {
+        if (this.props.post.ImageURLs?.length > 0 && !this.props.isDraftPost) {
             const imageUrls: string[] = [];
 
             for (const imageUrl of this.props.post.ImageURLs) {
@@ -87,11 +89,10 @@ export class PostComponent extends React.Component<Props, State> {
                     imageUrls.push(mappedImage);
                 }
             }
-
             this.props.post.ImageURLs = imageUrls;
         }
 
-        if (this.props.post.VideoURLs?.length > 0) {
+        if (this.props.post.VideoURLs?.length > 0 && !this.props.isDraftPost) {
             const videoUrls: string[] = [];
 
             for (const videoUrl of this.props.post.VideoURLs) {
@@ -121,6 +122,9 @@ export class PostComponent extends React.Component<Props, State> {
     }
 
     private goToStats(): void {
+        if (this.props.isDraftPost) {
+            return;
+        }
         this.props.navigation.push(
             'PostStatsTabNavigator',
             {
@@ -132,6 +136,9 @@ export class PostComponent extends React.Component<Props, State> {
     }
 
     private goToPost(): void {
+        if (this.props.isDraftPost) {
+            return;
+        }
         if (this.props.disablePostNavigate !== true) {
             this.props.navigation.push(
                 'Post',
@@ -350,7 +357,7 @@ export class PostComponent extends React.Component<Props, State> {
                         }
 
                         {
-                            this.props.post.PostExtraData?.EmbedVideoURL &&
+                            !!this.props.post.PostExtraData?.EmbedVideoURL &&
                             <CloutFeedVideoComponent embeddedVideoLink={this.props.post.PostExtraData?.EmbedVideoURL} />
                         }
 
@@ -371,7 +378,7 @@ export class PostComponent extends React.Component<Props, State> {
                             </View>
                         }
                         {
-                            this.props.post.Body || this.props.post.ImageURLs?.length > 0 ?
+                            !this.props.isDraftPost && (this.props.post.Body || this.props.post.ImageURLs?.length > 0) ?
                                 <PostActionsRow
                                     toggleHeartIcon={() => this.toggleHeartIcon()}
                                     navigation={this.props.navigation}

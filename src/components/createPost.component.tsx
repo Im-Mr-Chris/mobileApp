@@ -2,12 +2,12 @@ import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from 're
 import { Text, View, StyleSheet, InputAccessoryView, Platform, Dimensions, KeyboardAvoidingView, Alert } from 'react-native';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import * as Clipboard from 'expo-clipboard';
-import { Fontisto, Feather, Ionicons } from '@expo/vector-icons';
+import { Fontisto, Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { ImageGalleryComponent } from './imageGallery.component';
 import { themeStyles } from '@styles';
 import { settingsGlobals } from '../globals/settingsGlobals';
-import { EventType, Post, Profile } from '@types';
+import { EventType, Post, Profile, ToggleRefreshDraftPostsEvent } from '@types';
 import { PostComponent } from './post/post.component';
 import { useNavigation, useRoute } from '@react-navigation/core';
 import { ImageInfo } from 'expo-image-picker/build/ImagePicker.types';
@@ -22,6 +22,11 @@ import CloutFeedButton from '@components/cloutfeedButton.component';
 import ProfileInfoCardComponent from './profileInfo/profileInfoCard.component';
 import { ParamListBase } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { constants } from '@globals/constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { globals } from '@globals/globals';
+import { generatePostHashHex } from '@services/helpers';
+import { snackbar } from '@services/snackbar';
 
 interface Props {
     profile: Profile,
@@ -33,12 +38,18 @@ interface Props {
     videoLink: string,
     setVideoLink: (link: string) => void;
     newPost: boolean;
+    editPost?: boolean;
+    editedPost?: Post;
+    isDraftPost?: boolean;
+    draftPosts?: Post[]
 }
 
 export function CreatePostComponent(
-    { profile, postText, setPostText, editedPostImageUrls, setImagesBase64, recloutedPost, videoLink, setVideoLink, newPost }: Props) {
+    { profile, postText, setPostText, editedPostImageUrls, setImagesBase64, recloutedPost, videoLink, setVideoLink, newPost, editPost, editedPost, isDraftPost, draftPosts }: Props) {
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
     const route = useRoute();
+    const postRef = useRef<Post>({} as Post);
+    const oldDraftPostsRef = useRef<Post[]>([]);
 
     const mentionPartTypes = [
         {
@@ -73,6 +84,7 @@ export function CreatePostComponent(
     const [insertVideo, setInsertVideo] = useState<boolean>(!!videoLink);
     const [internalVideoLink, setInternalVideoLink] = useState<string>(videoLink);
     const [textSelection, setTextSelection] = useState<any>(newPost ? { start: 0, end: 0 } : undefined);
+    const [areDraftsShown, setAreDraftsShown] = useState(false);
 
     const scrollViewRef = useRef<ScrollView>(null);
     let inputRef: any;
@@ -81,16 +93,229 @@ export function CreatePostComponent(
 
     useEffect(
         () => {
+            if (!editPost) {
+                initDrafts();
+            }
 
             if (newPost) {
                 onMentionChange('\n\nPosted via @[cloutfeed](undefined)');
             }
+            const unsubscribeRefreshDraftPosts = navigation.addListener('focus', () => { refreshDraftPosts(); });
             return () => {
+                unsubscribeRefreshDraftPosts();
                 isMounted.current = false;
             };
         },
         []
     );
+
+    async function discardDraftPost(action: any) {
+        try {
+            const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+            if (oldDraftPostsRef.current.length === 0) {
+                await AsyncStorage.removeItem(key);
+            } else {
+                await AsyncStorage.setItem(key, JSON.stringify([...oldDraftPostsRef.current]));
+            }
+            navigation.dispatch(action);
+        } catch { }
+    }
+
+    useEffect(
+        () => {
+            if (editPost) {
+                updateNavigation();
+            }
+
+            const unsubscribeSwipeBackEvent = navigation.addListener(
+                'beforeRemove',
+                (e) => {
+                    if (shouldSaveDraft() && !editPost) {
+                        e.preventDefault();
+                        const action = e.data.action;
+                        Alert.alert(
+                            'Discard Changes?',
+                            'If you go back, you will lose the conent of this post',
+                            [
+                                {
+                                    text: 'Cancel',
+                                    onPress: () => undefined,
+                                    style: 'cancel'
+                                },
+                                {
+                                    text: 'Discard',
+                                    onPress: () => discardDraftPost(action),
+                                    style: 'destructive'
+                                },
+                                {
+                                    text: 'Save Draft',
+                                    onPress: saveDraftPost
+                                }
+                            ]
+                        );
+                    } else {
+                        updateDraftPost();
+                    }
+                }
+            );
+            return () => {
+                unsubscribeSwipeBackEvent();
+            };
+        },
+        [
+            postText,
+            imageUrls,
+            videoLink,
+            internalPostText,
+            internalVideoLink,
+        ]
+    );
+
+    useEffect(
+        () => {
+            if (shouldSaveDraft()) {
+                onSingleDraftPostChange();
+            }
+        },
+        [
+            postText,
+            imageUrls,
+            videoLink,
+            internalPostText,
+            internalVideoLink,
+        ]
+    );
+
+    async function refreshDraftPosts() {
+        const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+        const response = await AsyncStorage.getItem(key);
+        if (response) {
+            oldDraftPostsRef.current = JSON.parse(response);
+            setAreDraftsShown(true);
+        } else {
+            setAreDraftsShown(false);
+            oldDraftPostsRef.current = [];
+        }
+    }
+
+    async function onSingleDraftPostChange(): Promise<void> {
+        try {
+            const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+            await AsyncStorage.setItem(key, JSON.stringify([postRef.current, ...oldDraftPostsRef.current]));
+        } catch { }
+    }
+
+    function shouldSaveDraft(): boolean {
+        const initialText = '\n\nPosted via @cloutfeed';
+        return (initialText !== postRef.current.Body && postRef.current.Body.trim().length > 0) ||
+            imageUrls?.length > 0 ||
+            internalVideoLink?.length > 0;
+    }
+
+    function clearPost(): void {
+        setImageUrls([]);
+        onMentionChange('');
+        setSelectedImageIndex(0);
+        setInsertVideo(false);
+        setInternalVideoLink('');
+        setTextSelection(newPost ? { start: 0, end: 0 } : undefined);
+    }
+
+    async function saveDraftPost(): Promise<void> {
+        try {
+            const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+            await AsyncStorage.setItem(key, JSON.stringify([postRef.current, ...oldDraftPostsRef.current]));
+        } catch { }
+        snackbar.showSnackBar({ text: 'Post saved as a draft' });
+        clearPost();
+        setTimeout(() => navigation.pop(), 500);
+    }
+
+    async function updateDraftPost(): Promise<void> {
+        try {
+            const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+            if (draftPosts && editedPost) {
+                for (let i = 0; i < draftPosts.length; i++) {
+                    if (draftPosts[i].PostHashHex === editedPost.PostHashHex) {
+                        draftPosts[i].Body = postText;
+                        draftPosts[i].PostExtraData.EmbedVideoURL = videoLink;
+                        draftPosts[i].ImageURLs = imageUrls;
+                    }
+                }
+                await AsyncStorage.setItem(key, JSON.stringify(draftPosts));
+                const event: ToggleRefreshDraftPostsEvent = { draftPosts: [...draftPosts] };
+                eventManager.dispatchEvent(EventType.ToggleRefreshDraftPosts, event);
+            }
+        } catch { }
+    }
+
+    function handleDiscardAlert(): void {
+        return Alert.alert(
+            'Discard Changes?',
+            'If you go back, you will lose the conent of this post',
+            [
+                {
+                    text: 'Cancel',
+                    onPress: () => undefined,
+                    style: 'cancel'
+                },
+                {
+                    text: 'Discard',
+                    onPress: () => navigation.goBack(),
+                    style: 'destructive'
+                },
+                {
+                    text: 'Save Draft',
+                    onPress: saveDraftPost
+                }
+            ]
+        );
+    }
+
+    function updateNavigation(): void {
+        let callback = () => navigation.pop();
+        if (shouldSaveDraft() && !editPost) {
+            callback = handleDiscardAlert;
+        }
+        if (isDraftPost && editedPost) {
+            callback = () => { updateDraftPost(); navigation.goBack(); };
+        }
+
+        navigation.setOptions(
+            {
+                headerLeft: () => <TouchableOpacity onPress={callback} activeOpacity={1}>
+                    <Ionicons name="chevron-back" size={32} color="#007ef5" />
+                </TouchableOpacity>
+                ,
+                headerTitleStyle: {
+                    color: themeStyles.fontColorMain.color,
+                    alignSelf: 'center'
+                }
+            }
+        );
+    }
+
+    async function initDrafts(): Promise<void> {
+        try {
+            const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+            const oldDrafts = await AsyncStorage.getItem(key);
+            if (oldDrafts) {
+                const parsetOldDrafts = JSON.parse(oldDrafts);
+                if (parsetOldDrafts.length > 0) {
+                    setAreDraftsShown(true);
+                }
+                if (parsetOldDrafts.length !== 0) {
+                    oldDraftPostsRef.current = parsetOldDrafts;
+                }
+            } else {
+                setAreDraftsShown(false);
+            }
+        } catch { }
+    }
+
+    function goToDraftPosts(): void {
+        navigation.navigate('DraftPosts', { draftPosts: oldDraftPostsRef.current });
+    }
 
     function pickImage(): void {
 
@@ -197,6 +422,47 @@ export function CreatePostComponent(
         } catch { }
     }
 
+    postRef.current = {
+        Body: postText,
+        OwnerPublicKeyBase58Check: profile.PublicKeyBase58Check,
+        CommentCount: 0,
+        Comments: [],
+        ConfirmationBlockHeight: 0,
+        CreatorBasisPoints: 0,
+        DiamondCount: 0,
+        ImageURLs: imageUrls,
+        InGlobalFeed: true,
+        InMempool: false,
+        IsHidden: false,
+        IsNFT: false,
+        IsPinned: false,
+        LikeCount: 1,
+        NFTRoyaltyToCoinBasisPoints: 0,
+        NFTRoyaltyToCreatorBasisPoints: 0,
+        NumNFTCopies: 0,
+        NumNFTCopiesForSale: 0,
+        ParentPosts: {} as Post,
+        ParentStakeID: '',
+        PostEntryReaderState: {
+            DiamondLevelBestowed: 0,
+            LikedByReader: false,
+            RepostPostHashHex: '',
+            RepostedByReader: false,
+        },
+        PostExtraData: {
+            EmbedVideoURL: internalVideoLink
+        },
+        PostHashHex: editPost ? editedPost?.PostHashHex as string : generatePostHashHex(),
+        PosterPublicKeyBase58Check: profile?.PublicKeyBase58Check,
+        ProfileEntryResponse: profile,
+        QuoteRepostCount: 0,
+        RepostCount: 0,
+        RepostedPostEntryResponse: null as any,
+        StakeMultipleBasisPoints: 12500,
+        TimestampNanos: Math.round((new Date()).getTime() * 1000000),
+        VideoURLs: []
+    };
+
     function onMentionChange(value: string): void {
         const replaceMention = replaceMentionValues(value, ({ name, trigger }) => `${trigger}${name}`);
         setPostText(replaceMention);
@@ -296,16 +562,25 @@ export function CreatePostComponent(
         {
             Platform.OS === 'ios' ?
                 <InputAccessoryView nativeID={inputAccessoryViewId}>
-                    <View style={[styles.inputAccessory, themeStyles.containerColorMain, themeStyles.recloutBorderColor]}>
-                        <TouchableOpacity style={styles.inputAccessoryButton} onPress={pickImage}>
-                            <Feather name="image" size={20} color={themeStyles.fontColorMain.color} />
-                            <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Image</Text>
-                        </TouchableOpacity>
+                    <View style={[{ justifyContent: 'space-between' }, styles.inputAccessory, themeStyles.containerColorMain, themeStyles.recloutBorderColor]}>
+                        <View style={styles.inputAccessoryButton}>
+                            <TouchableOpacity style={styles.inputAccessoryButton} activeOpacity={0.8} onPress={pickImage}>
+                                <Feather name="image" size={20} color={themeStyles.fontColorMain.color} />
+                                <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Image</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.inputAccessoryButton} onPress={() => { setInsertVideo(true); scrollViewRef.current?.scrollToEnd({ animated: true }); }}>
-                            <Ionicons name="md-videocam-outline" size={24} color={themeStyles.fontColorMain.color} />
-                            <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Video</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.inputAccessoryButton} activeOpacity={0.8} onPress={() => { setInsertVideo(true); scrollViewRef.current?.scrollToEnd({ animated: true }); }}>
+                                <Ionicons name="md-videocam-outline" size={24} color={themeStyles.fontColorMain.color} />
+                                <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Video</Text>
+                            </TouchableOpacity>
+                        </View>
+                        {
+                            areDraftsShown &&
+                            <TouchableOpacity activeOpacity={0.8} onPress={goToDraftPosts} style={styles.inputAccessoryButton} >
+                                <MaterialCommunityIcons name="file-document-edit-outline" size={24} color={themeStyles.fontColorMain.color} />
+                                <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Drafts</Text>
+                            </TouchableOpacity>
+                        }
                     </View>
                 </InputAccessoryView>
                 :
@@ -313,15 +588,24 @@ export function CreatePostComponent(
                     behavior={'height'}
                     keyboardVerticalOffset={65}>
                     <View style={[styles.inputAccessory, themeStyles.containerColorMain, themeStyles.recloutBorderColor]}>
-                        <TouchableOpacity style={styles.inputAccessoryButton} onPress={pickImage}>
-                            <Feather name="image" size={20} color={themeStyles.fontColorMain.color} />
-                            <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Image</Text>
-                        </TouchableOpacity>
+                        <View style={styles.row}>
+                            <TouchableOpacity style={styles.inputAccessoryButton} onPress={pickImage}>
+                                <Feather name="image" size={20} color={themeStyles.fontColorMain.color} />
+                                <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Image</Text>
+                            </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.inputAccessoryButton} onPress={() => setInsertVideo(true)}>
-                            <Ionicons name="md-videocam-outline" size={24} color={themeStyles.fontColorMain.color} />
-                            <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Video</Text>
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.inputAccessoryButton} onPress={() => setInsertVideo(true)}>
+                                <Ionicons name="md-videocam-outline" size={24} color={themeStyles.fontColorMain.color} />
+                                <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Video</Text>
+                            </TouchableOpacity>
+                        </View>
+                        {
+                            areDraftsShown &&
+                            <TouchableOpacity activeOpacity={0.8} onPress={goToDraftPosts} style={styles.inputAccessoryButton} >
+                                <MaterialCommunityIcons name="file-document-edit-outline" size={24} color={themeStyles.fontColorMain.color} />
+                                <Text style={[styles.inputAccessoryButtonText, themeStyles.fontColorMain]}>Drafts</Text>
+                            </TouchableOpacity>
+                        }
                     </View>
                 </KeyboardAvoidingView>
         }
@@ -355,6 +639,10 @@ const styles = StyleSheet.create(
             flexDirection: 'row',
             alignItems: 'center',
             marginRight: 16
+        },
+        row: {
+            flexDirection: 'row',
+            alignItems: 'center',
         },
         inputAccessoryButtonText: {
             marginLeft: 6

@@ -22,6 +22,7 @@ import { ProfileScreen } from '@screens/profile/profile.screen';
 import ProfileFollowersTab from '@screens/profile/profileFollowersTabNavigator';
 import { WalletScreen } from '@screens/wallet/wallet.screen';
 import { themeStyles } from '@styles/globalColors';
+import DraftPostsScreen from '@screens/draftPosts/draftPosts.screen';
 
 const styles = StyleSheet.create(
     {
@@ -88,7 +89,7 @@ export const SharedStackScreens = [
     {
         options: ({ route }: any) => (
             {
-                headerTitle: route.params.newPost ? 'New Post' : route.params.comment ? 'New Comment' :
+                headerTitle: route.params.newPost ? '' : route.params.comment ? 'New Comment' :
                     route.params.editPost ? 'Edit Post' : 'Reclout Post',
                 headerBackTitle: 'Cancel',
                 headerTitleStyle: {
@@ -104,6 +105,20 @@ export const SharedStackScreens = [
         ),
         name: 'CreatePost',
         component: CreatePostScreen
+    },
+    {
+        options: ({ route }: any) => (
+            {
+                headerTitle: 'Drafts',
+                headerTitleStyle: {
+                    marginRight: Platform.OS === 'ios' ? 0 : 50,
+                    alignSelf: 'center',
+                    color: themeStyles.fontColorMain.color
+                },
+            }
+        ),
+        name: 'DraftPosts',
+        component: DraftPostsScreen
     },
     {
         options: {

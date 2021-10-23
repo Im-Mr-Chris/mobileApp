@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, StyleSheet, Linking, Alert, Platform } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { globals } from '@globals';
+import { constants, globals } from '@globals';
 import { api, cache } from '@services';
 import { themeStyles, globalStyles } from '@styles';
 import { CreatePostComponent } from '@components/createPost.component';
 import { Post, Profile } from '@types';
 import { signing } from '@services/authorization/signing';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 const mime = require('mime');
 
 export function CreatePostScreen({ navigation, route }: any) {
+
     const [isLoading, setLoading] = useState(true);
     const [canCreateProfile, setCanCreateProfile] = useState(false);
     const [profile, setProfile] = useState({} as Profile);
@@ -19,8 +21,8 @@ export function CreatePostScreen({ navigation, route }: any) {
     const [imagesBase64, setImagesBase64] = useState<string[]>([]);
     const [recloutedPostEntry, setRecloutedPostEntry] = useState<Post>();
 
-    const { newPost, comment, reclout, editPost, parentPost, recloutedPost, editedPost }: {
-        newPost: boolean, comment: boolean, reclout: boolean, editPost: boolean, parentPost: Post, recloutedPost: Post, editedPost: Post
+    const { newPost, comment, reclout, editPost, parentPost, recloutedPost, editedPost, isDraftPost, draftPosts }: {
+        newPost: boolean, comment: boolean, reclout: boolean, editPost: boolean, parentPost: Post, recloutedPost: Post, editedPost: Post, isDraftPost: boolean, draftPosts: Post[]
     } = route.params;
 
     const isMounted = useRef<boolean>(true);
@@ -36,9 +38,8 @@ export function CreatePostScreen({ navigation, route }: any) {
             if (isMounted) {
                 setLoading(true);
             }
-
             let imageUrls: string[] = [];
-            if (editPost) {
+            if (editPost && !isDraftPost) {
                 imageUrls = images.filter(p_image => editedPost.ImageURLs.indexOf(p_image) !== -1);
                 images = images.filter(p_image => editedPost.ImageURLs.indexOf(p_image) === -1);
             }
@@ -57,9 +58,16 @@ export function CreatePostScreen({ navigation, route }: any) {
             );
 
             try {
+                if (editPost && isDraftPost) {
+                    const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+                    const fileteredDraftPosts = draftPosts.filter((post: Post) => post.PostHashHex !== editedPost.PostHashHex);
+                    await AsyncStorage.setItem(key, JSON.stringify(fileteredDraftPosts));
+                }
                 const jwt = await signing.signJWT();
                 if (jwt) {
-                    const promises = files.map(p_file => Platform.OS === 'android' ? api.uploadImageAndroid(globals.user.publicKey, jwt, p_file) : api.uploadImage(globals.user.publicKey, jwt, p_file));
+                    const promises = files.map(p_file => Platform.OS === 'android' ?
+                        api.uploadImageAndroid(globals.user.publicKey, jwt, p_file) :
+                        api.uploadImage(globals.user.publicKey, jwt, p_file));
                     const responses = await Promise.all(promises);
                     imageUrls = imageUrls.concat(responses.map((p_response: any) => p_response.ImageURL));
                     fnCreatePost(postText, imageUrls);
@@ -92,10 +100,12 @@ export function CreatePostScreen({ navigation, route }: any) {
             parentPostHashHex = parentPost?.PostHashHex;
         }
 
+        const editPostHashHex = isDraftPost ? undefined : editedPost?.PostHashHex;
         api.createPost(
-            globals.user.publicKey, p_text, p_imageUrls, parentPostHashHex, recloutedPostHashHex, editedPost?.PostHashHex, videoLink
+            globals.user.publicKey, p_text, p_imageUrls, parentPostHashHex, recloutedPostHashHex, editPostHashHex, videoLink
         ).then(
             async p_response => {
+
                 const transactionHex = p_response.TransactionHex;
                 const signedTransaction = await signing.signTransaction(transactionHex);
 
@@ -115,17 +125,16 @@ export function CreatePostScreen({ navigation, route }: any) {
                     },
                     p_error => {
                         globals.defaultHandleError(p_error);
-
                         if (isMounted) {
                             setLoading(false);
                         }
                     }
                 );
+
             }
         ).catch(
-            p_error => {
+            (p_error) => {
                 globals.defaultHandleError(p_error);
-
                 if (isMounted) {
                     setLoading(false);
                 }
@@ -176,17 +185,17 @@ export function CreatePostScreen({ navigation, route }: any) {
 
     useEffect(
         () => {
-
             if (globals.readonly) {
                 navigation.goBack();
                 Alert.alert('Info', 'You are using CloutFeed in the read-only mode. If you wish to post, please logout and login again using CloutFeed Identity.');
                 return;
             }
-
             cache.user.getData().then(
                 p_user => {
+                    if (isDraftPost && editPost) {
+                        setVideoLink(editedPost.PostExtraData.EmbedVideoURL);
+                    }
                     const profile = p_user.ProfileEntryResponse;
-
                     if (editPost) {
                         if (editedPost.RepostedPostEntryResponse) {
                             setRecloutedPostEntry(editedPost.RepostedPostEntryResponse);
@@ -220,7 +229,6 @@ export function CreatePostScreen({ navigation, route }: any) {
         },
         []
     );
-
     return (
         <View style={[styles.container, themeStyles.containerColorMain]}>
             {
@@ -229,6 +237,10 @@ export function CreatePostScreen({ navigation, route }: any) {
                     :
                     canCreateProfile ?
                         <CreatePostComponent
+                            draftPosts={draftPosts}
+                            isDraftPost={isDraftPost}
+                            editedPost={editedPost}
+                            editPost={editPost}
                             profile={profile}
                             editedPostImageUrls={editedPost?.ImageURLs ? editedPost.ImageURLs : []}
                             postText={postText}
@@ -238,7 +250,7 @@ export function CreatePostScreen({ navigation, route }: any) {
                             videoLink={editedPost?.PostExtraData.EmbedVideoURL}
                             setVideoLink={setVideoLink}
                             newPost={newPost}
-                        ></CreatePostComponent> :
+                        /> :
                         <View style={[
                             globalStyles.profileNotCompletedContainer,
                             { backgroundColor: themeStyles.containerColorSub.backgroundColor }
