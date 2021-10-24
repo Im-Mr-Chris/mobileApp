@@ -460,7 +460,13 @@ export function CreatePostComponent(
         RepostedPostEntryResponse: null as any,
         StakeMultipleBasisPoints: 12500,
         TimestampNanos: Math.round((new Date()).getTime() * 1000000),
-        VideoURLs: []
+        VideoURLs: [],
+        SerialNumber: 0,
+        HighestBidAmountNanos: 0,
+        LastAcceptedBidAmountNanos: 0,
+        LowestBidAmountNanos: 0,
+        MinBidAmountNanos: 0,
+        BidAmountNanos: 0
     };
 
     function onMentionChange(value: string): void {

@@ -1,12 +1,13 @@
 import React from 'react';
-import { Text, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Animated } from 'react-native';
 import { RouteProp } from '@react-navigation/core';
 import { ParamListBase } from '@react-navigation/routers';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Post } from '@types';
 import { themeStyles } from '@styles/globalColors';
 import { PostComponent } from '@components/post/post.component';
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { AntDesign } from '@expo/vector-icons';
+import { Swipeable, TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
@@ -23,8 +24,6 @@ interface State {
 
 export default class DraftPostComponentComponent extends React.Component<Props, State> {
 
-    private _isMounted = false;
-
     constructor(props: Props) {
         super(props);
 
@@ -35,14 +34,6 @@ export default class DraftPostComponentComponent extends React.Component<Props, 
 
         this.goToEditPost = this.goToEditPost.bind(this);
         this.handleDeletePost = this.handleDeletePost.bind(this);
-    }
-
-    componentDidMount(): void {
-        this._isMounted = true;
-    }
-
-    componentWillUnmount(): void {
-        this._isMounted = false;
     }
 
     private goToEditPost(): void {
@@ -63,30 +54,56 @@ export default class DraftPostComponentComponent extends React.Component<Props, 
     }
 
     render(): JSX.Element {
+
+        const renderRightCancelSwipe = (dragX: any): JSX.Element => {
+            const scale = dragX.interpolate({
+                inputRange: [-100, 0],
+                outputRange: [1, 0.3],
+                extrapolate: 'clamp',
+            });
+
+            return <TouchableOpacity
+                style={{ backgroundColor: '#fc6360' }}
+                activeOpacity={0.7}
+                onPress={() => this.handleDeletePost()}
+            >
+                <View style={[styles.deleteBox, themeStyles.borderColor]}>
+                    <>
+                        <AntDesign name="delete" size={20} color="white" />
+                        <Animated.Text style=
+                            {
+                                [
+                                    { transform: [{ scale: scale }] },
+                                    styles.deleteBoxText
+                                ]
+                            }
+                        >
+                            Delete
+                        </Animated.Text>
+                    </>
+
+                </View>
+            </TouchableOpacity>;
+        };
+
         return <View style={[styles.container, themeStyles.containerColorMain]}>
-            <PostComponent
-                actionsDisabled={true}
-                isDraftPost={true}
-                route={this.props.route}
-                navigation={this.props.navigation}
-                post={this.props.draftPost}
-            />
-            <View style={styles.row}>
-                <TouchableOpacity
-                    onPress={this.goToEditPost}
-                    style={[styles.nftButtonContainer, themeStyles.verificationBadgeBackgroundColor]}
-                >
-                    <Feather name="edit" size={17} color="white" />
-                    <Text style={styles.buttonText}>Edit Post</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={this.handleDeletePost}
-                    style={[styles.nftButtonContainer, themeStyles.likeHeartBackgroundColor]}
-                >
-                    <AntDesign name="delete" size={18} color="white" />
-                    <Text style={styles.buttonText}>Delete</Text>
-                </TouchableOpacity>
-            </View>
+            <Swipeable
+                rightThreshold={40}
+                renderRightActions=
+                {
+                    (_progress: any, dragX: any) => renderRightCancelSwipe(dragX)
+                }
+            >
+                <TouchableWithoutFeedback onPress={this.goToEditPost}>
+                    <PostComponent
+                        actionsDisabled={true}
+                        isDraftPost={true}
+                        route={this.props.route}
+                        navigation={this.props.navigation}
+                        post={this.props.draftPost}
+                    />
+                </TouchableWithoutFeedback>
+            </Swipeable>
         </View>;
     }
 }
@@ -96,26 +113,17 @@ const styles = StyleSheet.create(
         container: {
             flex: 1
         },
-        nftButtonContainer: {
-            flexDirection: 'row',
+        deleteBox: {
             justifyContent: 'center',
             alignItems: 'center',
-            width: '40%',
-            height: 35,
-            borderRadius: 6,
-            marginVertical: 10,
-            alignSelf: 'center',
+            width: 80,
+            height: '100%',
+            borderBottomWidth: 1,
         },
-        buttonText: {
+        deleteBoxText: {
             color: 'white',
-            marginLeft: 8,
-            fontSize: 15
-        },
-        row: {
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center',
-            marginHorizontal: 15
+            paddingTop: 5,
+            fontSize: 13
         }
     }
 );

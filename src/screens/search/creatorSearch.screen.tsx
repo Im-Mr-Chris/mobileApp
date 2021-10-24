@@ -57,6 +57,7 @@ export class CreatorsSearchScreen extends React.Component<Props, State> {
 
         this.setSearchMethod();
         this.initHistoryProfiles();
+
         this._focusSubscription = this.props.navigation.addListener(
             'focus',
             () => {
@@ -112,6 +113,10 @@ export class CreatorsSearchScreen extends React.Component<Props, State> {
                     },
                     500
                 );
+            }
+
+            if (!p_usernamePrefix) {
+                this.initHistoryProfiles();
             }
         };
     }

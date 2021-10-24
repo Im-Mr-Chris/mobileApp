@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, StyleSheet, Text, ActivityIndicator, FlatList } from 'react-native';
-import { NavigationProp, RouteProp } from '@react-navigation/native';
+import { RouteProp } from '@react-navigation/native';
 import { CreatorCoinChartComponent } from './components/creatorCoinChart.component';
 import { themeStyles } from '@styles';
 import { CreatorCoinTransaction, Profile } from '@types';
 import { CreatorCoinHeaderComponent } from './components/creatorCoinHeader.component';
-import { api, cloutFeedApi } from '@services';
+import { api, cloutFeedApi, getAnonymousProfile } from '@services';
 import { CreatorCoinTransactionComponent } from './components/creatorCoinTransaction.component';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 type RouteParams = {
     CreatorCoin: {
@@ -20,7 +21,7 @@ type RouteParams = {
 }
 
 interface Props {
-    navigation: NavigationProp<any>;
+    navigation: StackNavigationProp<any>;
     route: RouteProp<RouteParams, 'CreatorCoin'>;
 }
 
@@ -56,7 +57,7 @@ export class CreatorCoinScreen extends React.Component<Props, State> {
 
         cloutFeedApi.getHistoricalCoinPrice(publicKey, 0)
             .then(
-                async (p_creatorCoinTransactions: CreatorCoinTransaction[]) => {
+                (p_creatorCoinTransactions: CreatorCoinTransaction[]) => {
                     if (this._isMounted) {
                         this.setState({ creatorCoinTransactions: p_creatorCoinTransactions, loading: false });
 
@@ -125,7 +126,7 @@ export class CreatorCoinScreen extends React.Component<Props, State> {
     ): Promise<{ profilesMap: { [key: string]: Profile | null }, historyData: CreatorCoinTransaction[] }> {
         const profilesMap: { [key: string]: Profile | null } = Object.assign({}, this.state.profilesMap);
         const historyData: CreatorCoinTransaction[] = this.state.historyData.slice(0);
-        const promises: Promise<boolean>[] = [];
+        const promises: Promise<void>[] = [];
 
         for (let i = p_creatorCoinTransactions.length - 1; i >= 0; i--) {
             historyData.push(p_creatorCoinTransactions[i]);
@@ -136,17 +137,20 @@ export class CreatorCoinScreen extends React.Component<Props, State> {
             }
 
             profilesMap[publicKey] = null;
-            const promise = new Promise<boolean>(
-                (p_resolve, _reject) => {
+            const promise = new Promise<void>(
+                (p_resolve) => {
                     api.getSingleProfile('', publicKey).then(
                         p_response => {
                             const profile: Profile = p_response.Profile;
                             if (profile) {
                                 profilesMap[publicKey] = profile;
                             }
-                            p_resolve(true);
+                            p_resolve();
                         }
-                    ).catch(() => p_resolve(false));
+                    ).catch(() => {
+                        profilesMap[publicKey] = getAnonymousProfile(publicKey);
+                        p_resolve();
+                    });
                 }
             );
             promises.push(promise);

@@ -76,16 +76,16 @@ export interface Post {
     StakeMultipleBasisPoints: number;
     QuoteRepostCount: number;
     IsNFT: boolean;
-    SerialNumber?: number;
+    SerialNumber: number;
     NumNFTCopies: number;
     NumNFTCopiesForSale: number;
     IsForSale?: boolean;
-    HighestBidAmountNanos?: number;
-    LastAcceptedBidAmountNanos?: number;
-    LowestBidAmountNanos?: number;
-    MinBidAmountNanos?: number;
+    HighestBidAmountNanos: number;
+    LastAcceptedBidAmountNanos: number;
+    LowestBidAmountNanos: number;
+    MinBidAmountNanos: number;
     OwnerPublicKeyBase58Check: string;
-    BidAmountNanos?: number;
+    BidAmountNanos: number;
     NFTRoyaltyToCoinBasisPoints: number;
     NFTRoyaltyToCreatorBasisPoints: number;
 }

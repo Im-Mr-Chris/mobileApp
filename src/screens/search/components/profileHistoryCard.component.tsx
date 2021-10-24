@@ -6,12 +6,14 @@ import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/routers';
 import { snackbar } from '@services/snackbar';
+// this is needed to prevent changing tab on scroll
+import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
     handleSearchHistory: (profile: SearchHistoryProfile) => void;
     historyProfiles: SearchHistoryProfile[];
-    clearSearchHistory: () => void;
+    clearSearchHistory: () => Promise<void>;
 }
 
 interface State {
@@ -50,12 +52,15 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
         this.setState({ showClearText: !this.state.showClearText });
     }
 
-    private clearSearchHistory(): void {
+    private async clearSearchHistory() {
         this.setState({ isClearHistoryLoading: true });
-        this.props.clearSearchHistory();
-        this.setState({ historyProfiles: [] });
+        await this.props.clearSearchHistory();
+
         snackbar.showSnackBar({ text: 'History cleared successfully' });
-        this.setState({ isClearHistoryLoading: false, showClearText: false });
+
+        if (this._isMounted) {
+            this.setState({ historyProfiles: [], isClearHistoryLoading: false, showClearText: false });
+        }
     }
 
     private goToProfile(profile: SearchHistoryProfile): void {
@@ -71,9 +76,9 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
     }
 
     render(): JSX.Element {
+        const clearBackgroundColor = themeStyles.verificationBadgeBackgroundColor.backgroundColor;
 
         const keyExtractor = (item: SearchHistoryProfile, index: number): string => `${item.PublicKeyBase58Check}_${index}`;
-        const clearBackgroundColor = themeStyles.verificationBadgeBackgroundColor.backgroundColor;
         const renderItems = ({ item }: { item: SearchHistoryProfile }): JSX.Element => <TouchableOpacity
             activeOpacity={1}
             onPress={() => this.goToProfile(item)}
@@ -84,12 +89,12 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
                 <Text numberOfLines={2} style={[styles.username, themeStyles.fontColorSub]}>{item.Username}</Text>
                 {
                     item?.IsVerified &&
-                    <MaterialIcons name="verified" size={16} style={styles.verified} color="#007ef5" />
+                    <MaterialIcons name="verified" size={16} style={styles.verified} color={themeStyles.verificationBadgeBackgroundColor.backgroundColor} />
                 }
             </View>
         </TouchableOpacity>;
 
-        return <View>
+        return <>
             <View style={styles.headerRow}>
                 <Text style={[styles.historyTitle, themeStyles.fontColorMain]}>Recent Searches</Text>
                 <View style={{ height: 30 }}>
@@ -117,17 +122,19 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
                     }
                 </View>
             </View>
-            <FlatList
-                horizontal
-                bounces={false}
-                contentContainerStyle={styles.flatListStyle}
-                data={this.state.historyProfiles}
-                showsHorizontalScrollIndicator={false}
-                keyExtractor={keyExtractor}
-                renderItem={renderItems}
-            />
-            <Text style={[styles.historyTitle, themeStyles.fontColorMain, { paddingLeft: 10 }]}>Top Creators</Text>
-        </View>;
+            <TouchableOpacityGesture>
+                <FlatList
+                    horizontal
+                    bounces={false}
+                    contentContainerStyle={styles.flatListStyle}
+                    data={this.state.historyProfiles}
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={keyExtractor}
+                    renderItem={renderItems}
+                />
+                <Text style={[styles.historyTitle, themeStyles.fontColorMain]}>Top Creators</Text>
+            </TouchableOpacityGesture>
+        </>;
     }
 }
 
@@ -148,7 +155,7 @@ const styles = StyleSheet.create(
             flexDirection: 'row',
             justifyContent: 'space-between',
             alignItems: 'center',
-            paddingHorizontal: 10,
+            paddingRight: 10,
             paddingTop: 10
         },
         row: {
@@ -157,7 +164,8 @@ const styles = StyleSheet.create(
         },
         historyTitle: {
             fontSize: 17,
-            fontWeight: 'bold'
+            fontWeight: 'bold',
+            paddingLeft: 10
         },
         flatListStyle: {
             marginVertical: 20,
