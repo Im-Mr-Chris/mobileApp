@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, Switch, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, Switch, ScrollView, TouchableOpacity } from 'react-native';
 import { themeStyles } from '@styles';
 import { SelectListControl } from '@controls/selectList.control';
 import * as SecureStore from 'expo-secure-store';
@@ -8,6 +8,14 @@ import { globals } from '@globals/globals';
 import { eventManager } from '@globals/injector';
 import { EventType, FeedType, HiddenNFTType, ToggleCloutCastFeedEvent, ToggleHideCoinPriceEvent, ToggleHideNFTsEvent } from '@types';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
+import { MaterialIcons } from '@expo/vector-icons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ParamListBase } from '@react-navigation/routers';
+import { settingsGlobals } from '@globals/settingsGlobals';
+
+interface Props {
+    navigation: StackNavigationProp<ParamListBase>;
+}
 
 interface State {
     isLoading: boolean;
@@ -18,11 +26,11 @@ interface State {
     feed: FeedType;
 }
 
-export class PreferencesScreen extends React.Component<Record<string, never>, State>{
+export class PreferencesScreen extends React.Component<Props, State>{
 
     private _isMounted = false;
 
-    constructor(props: Record<string, never>) {
+    constructor(props: Props) {
         super(props);
 
         this.state = {
@@ -37,6 +45,8 @@ export class PreferencesScreen extends React.Component<Record<string, never>, St
         this.toggleCloutCastFeed = this.toggleCloutCastFeed.bind(this);
         this.onFeedTypeChange = this.onFeedTypeChange.bind(this);
         this.toggleCoinPrice = this.toggleCoinPrice.bind(this);
+        this.goToAppearance = this.goToAppearance.bind(this);
+
         this.initScreen();
     }
 
@@ -143,6 +153,10 @@ export class PreferencesScreen extends React.Component<Record<string, never>, St
         }
     }
 
+    private goToAppearance(): void {
+        this.props.navigation.push('Appearance');
+    }
+
     render(): JSX.Element {
 
         if (this.state.isLoading) {
@@ -150,6 +164,16 @@ export class PreferencesScreen extends React.Component<Record<string, never>, St
         }
 
         return <ScrollView style={[themeStyles.containerColorMain, styles.container]}>
+            <TouchableOpacity
+                style={[styles.cloutCastFeedSettingsContainer, themeStyles.containerColorMain, themeStyles.borderColor]}
+                onPress={this.goToAppearance}
+                activeOpacity={1}>
+                <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Appearance</Text>
+                <View style={styles.row}>
+                    <Text style={[styles.appearanceText, themeStyles.fontColorSub]}>{settingsGlobals.darkMode ? 'Dark' : 'Light'}</Text>
+                    <MaterialIcons name="keyboard-arrow-right" size={27} color={themeStyles.fontColorSub.color} />
+                </View>
+            </TouchableOpacity>
             {
                 globals.readonly ? undefined :
                     <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
@@ -263,6 +287,15 @@ const styles = StyleSheet.create(
             fontSize: 18,
             paddingLeft: 15,
             fontWeight: '700'
+        },
+        row: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            right: -8,
+        },
+        appearanceText: {
+            fontSize: 16,
         }
     }
 );

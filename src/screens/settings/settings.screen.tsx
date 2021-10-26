@@ -21,9 +21,9 @@ export function SettingsScreen({ navigation }: Props) {
 
     const settings: Settings[] = [
         {
-            title: 'Appearance',
-            icon: <Ionicons name="ios-color-palette" size={24} color={themeStyles.fontColorMain.color} />,
-            action: () => navigation.navigate('Appearance')
+            title: 'Preferences',
+            icon: <Ionicons name="options-outline" size={24} color={themeStyles.fontColorMain.color} />,
+            action: () => navigation.navigate('Preferences')
         },
         {
             title: 'Notifications',
@@ -34,11 +34,6 @@ export function SettingsScreen({ navigation }: Props) {
             title: 'Haptics',
             icon: <MaterialCommunityIcons name="vibrate" size={24} color={themeStyles.fontColorMain.color} />,
             action: () => navigation.navigate('HapticsSettings')
-        },
-        {
-            title: 'Preferences',
-            icon: <Ionicons name="options-outline" size={24} color={themeStyles.fontColorMain.color} />,
-            action: () => navigation.navigate('Preferences')
         },
         {
             title: 'Saved Posts',
