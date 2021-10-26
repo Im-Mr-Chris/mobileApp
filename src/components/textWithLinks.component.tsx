@@ -58,15 +58,28 @@ export class TextWithLinks extends React.Component<Props, State>{
         return username.replace(/[^\w+$]/g, '');
     }
 
+    private handlePostLink(url: string): string | undefined {
+        const postLinks = [
+            'bitclout.com/posts/',
+            'members.giftclout.com/posts/',
+            'nachoaverage.com/posts/',
+            'love4src.com/posts/',
+            'diamondapp.com/posts/'
+        ];
+        for (const link of postLinks) {
+            if (url.includes(link)) {
+                return link;
+            }
+        }
+    }
+
     private onLinkPressed(p_url: string, p_match: Match) {
         const linkType = p_match.getType();
         switch (linkType) {
             case 'url': {
-                const postLink = 'bitclout.com/posts/';
-                const isPostLink = p_url.includes(postLink);
-
-                if (isPostLink) {
-                    const postHashHexStartIndex = p_url.indexOf(postLink) + postLink.length;
+                const targetLink: string | undefined = this.handlePostLink(p_url);
+                if (targetLink) {
+                    const postHashHexStartIndex = p_url.indexOf(targetLink) + targetLink.length;
                     const postHashHex = p_url.slice(postHashHexStartIndex, postHashHexStartIndex + 64);
                     this.props.navigation.push(
                         'Post',
@@ -120,10 +133,8 @@ export class TextWithLinks extends React.Component<Props, State>{
     }
 
     private renderLink(p_text: string) {
-        const postLink = 'bitclout.com/posts/';
-        const isPostLink = p_text.includes(postLink);
-
-        if (isPostLink) {
+        const link: string | undefined = this.handlePostLink(p_text);
+        if (link) {
             return 'Go to Post';
         } else {
             return p_text;
