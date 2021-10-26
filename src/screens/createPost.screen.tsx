@@ -20,6 +20,7 @@ export function CreatePostScreen({ navigation, route }: any) {
     const [videoLink, setVideoLink] = useState('');
     const [imagesBase64, setImagesBase64] = useState<string[]>([]);
     const [recloutedPostEntry, setRecloutedPostEntry] = useState<Post>();
+    const [currentPostHashHex, setCurrentPostHashHex] = useState('');
 
     const { newPost, comment, reclout, editPost, parentPost, recloutedPost, editedPost, isDraftPost, draftPosts }: {
         newPost: boolean, comment: boolean, reclout: boolean, editPost: boolean, parentPost: Post, recloutedPost: Post, editedPost: Post, isDraftPost: boolean, draftPosts: Post[]
@@ -58,10 +59,18 @@ export function CreatePostScreen({ navigation, route }: any) {
             );
 
             try {
-                if (editPost && isDraftPost) {
-                    const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+                if (draftPosts) {
                     const fileteredDraftPosts = draftPosts.filter((post: Post) => post.PostHashHex !== editedPost.PostHashHex);
+                    const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
                     await AsyncStorage.setItem(key, JSON.stringify(fileteredDraftPosts));
+                } else {
+                    const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
+                    const response = await AsyncStorage.getItem(key);
+                    if (response) {
+                        const parsedDraftPosts = JSON.parse(response);
+                        const fileteredDraftPosts = parsedDraftPosts.filter((post: Post) => post.PostHashHex !== currentPostHashHex);
+                        await AsyncStorage.setItem(key, JSON.stringify(fileteredDraftPosts));
+                    }
                 }
                 const jwt = await signing.signJWT();
                 if (jwt) {
@@ -237,6 +246,7 @@ export function CreatePostScreen({ navigation, route }: any) {
                     :
                     canCreateProfile ?
                         <CreatePostComponent
+                            setCurrentPostHashHex={setCurrentPostHashHex}
                             draftPosts={draftPosts}
                             isDraftPost={isDraftPost}
                             editedPost={editedPost}

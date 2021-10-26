@@ -42,13 +42,17 @@ interface Props {
     editedPost?: Post;
     isDraftPost?: boolean;
     draftPosts?: Post[]
+    setCurrentPostHashHex?: (postHashHex: string) => void
 }
 
 export function CreatePostComponent(
-    { profile, postText, setPostText, editedPostImageUrls, setImagesBase64, recloutedPost, videoLink, setVideoLink, newPost, editPost, editedPost, isDraftPost, draftPosts }: Props) {
+    { profile, postText, setPostText, editedPostImageUrls, setImagesBase64, recloutedPost, videoLink, setVideoLink, newPost, editPost, editedPost, isDraftPost, draftPosts, setCurrentPostHashHex }: Props) {
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
     const route = useRoute();
     const postRef = useRef<Post>({} as Post);
+    const imageUrlsRef = useRef<string[]>([]);
+    const internalVideoLinkRef = useRef<string>(videoLink);
+
     const oldDraftPostsRef = useRef<Post[]>([]);
 
     const mentionPartTypes = [
@@ -126,41 +130,42 @@ export function CreatePostComponent(
             if (editPost) {
                 updateNavigation();
             }
-
-            const unsubscribeSwipeBackEvent = navigation.addListener(
-                'beforeRemove',
-                (e) => {
-                    if (shouldSaveDraft() && !editPost) {
-                        e.preventDefault();
-                        const action = e.data.action;
-                        Alert.alert(
-                            'Discard Changes?',
-                            'If you go back, you will lose the conent of this post',
-                            [
-                                {
-                                    text: 'Cancel',
-                                    onPress: () => undefined,
-                                    style: 'cancel'
-                                },
-                                {
-                                    text: 'Discard',
-                                    onPress: () => discardDraftPost(action),
-                                    style: 'destructive'
-                                },
-                                {
-                                    text: 'Save Draft',
-                                    onPress: saveDraftPost
-                                }
-                            ]
-                        );
-                    } else {
-                        updateDraftPost();
+            if ((route.params as any)?.newPost || (editPost && isDraftPost)) {
+                const unsubscribeSwipeBackEvent = navigation.addListener(
+                    'beforeRemove',
+                    (e) => {
+                        if (shouldSaveDraft() && !editPost) {
+                            e.preventDefault();
+                            const action = e.data.action;
+                            Alert.alert(
+                                'Discard Changes?',
+                                'If you go back, you will lose the conent of this post',
+                                [
+                                    {
+                                        text: 'Cancel',
+                                        onPress: () => undefined,
+                                        style: 'cancel'
+                                    },
+                                    {
+                                        text: 'Discard',
+                                        onPress: () => discardDraftPost(action),
+                                        style: 'destructive'
+                                    },
+                                    {
+                                        text: 'Save Draft',
+                                        onPress: saveDraftPost
+                                    }
+                                ]
+                            );
+                        } else {
+                            updateDraftPost();
+                        }
                     }
-                }
-            );
-            return () => {
-                unsubscribeSwipeBackEvent();
-            };
+                );
+                return () => {
+                    unsubscribeSwipeBackEvent();
+                };
+            }
         },
         [
             postText,
@@ -173,8 +178,12 @@ export function CreatePostComponent(
 
     useEffect(
         () => {
-            if (shouldSaveDraft()) {
+            const shouldSaveSingleDraftPost = isDraftPost || (route.params as any)?.newPost;
+            if (shouldSaveDraft() && shouldSaveSingleDraftPost) {
                 onSingleDraftPostChange();
+            }
+            if (setCurrentPostHashHex) {
+                setCurrentPostHashHex(postRef.current?.PostHashHex);
             }
         },
         [
@@ -214,6 +223,7 @@ export function CreatePostComponent(
 
     function clearPost(): void {
         setImageUrls([]);
+        imageUrlsRef.current = [];
         onMentionChange('');
         setSelectedImageIndex(0);
         setInsertVideo(false);
@@ -225,10 +235,10 @@ export function CreatePostComponent(
         try {
             const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
             await AsyncStorage.setItem(key, JSON.stringify([postRef.current, ...oldDraftPostsRef.current]));
+            snackbar.showSnackBar({ text: 'Post saved as a draft' });
+            clearPost();
+            setTimeout(() => navigation.pop(), 500);
         } catch { }
-        snackbar.showSnackBar({ text: 'Post saved as a draft' });
-        clearPost();
-        setTimeout(() => navigation.pop(), 500);
     }
 
     async function updateDraftPost(): Promise<void> {
@@ -238,7 +248,7 @@ export function CreatePostComponent(
                 for (let i = 0; i < draftPosts.length; i++) {
                     if (draftPosts[i].PostHashHex === editedPost.PostHashHex) {
                         draftPosts[i].Body = postText;
-                        draftPosts[i].PostExtraData.EmbedVideoURL = videoLink;
+                        draftPosts[i].PostExtraData.EmbedVideoURL = internalVideoLinkRef.current;
                         draftPosts[i].ImageURLs = imageUrls;
                     }
                 }
@@ -367,7 +377,9 @@ export function CreatePostComponent(
                 if (result.type === 'image') {
                     if (isMounted.current) {
                         const uri = (result as ImageInfo).uri;
+                        const newImages = [...imageUrls, uri];
                         setImageUrls(previous => [...previous, uri]);
+                        imageUrlsRef.current = newImages;
                         setImagesBase64((previous: string[]) => [...previous, uri]);
                         setSelectedImageIndex(imageUrls.length);
                     }
@@ -413,6 +425,7 @@ export function CreatePostComponent(
             const parseVideoLink = await parseVideoLinkAsync(copiedVideolink);
             if (parseVideoLink) {
                 if (isMounted.current) {
+                    internalVideoLinkRef.current = parseVideoLink.videoLink;
                     setInternalVideoLink(parseVideoLink.videoLink);
                     setVideoLink(parseVideoLink.videoLink);
                 }
@@ -430,7 +443,7 @@ export function CreatePostComponent(
         ConfirmationBlockHeight: 0,
         CreatorBasisPoints: 0,
         DiamondCount: 0,
-        ImageURLs: imageUrls,
+        ImageURLs: imageUrlsRef.current,
         InGlobalFeed: true,
         InMempool: false,
         IsHidden: false,
@@ -450,7 +463,7 @@ export function CreatePostComponent(
             RepostedByReader: false,
         },
         PostExtraData: {
-            EmbedVideoURL: internalVideoLink
+            EmbedVideoURL: internalVideoLinkRef.current
         },
         PostHashHex: editPost ? editedPost?.PostHashHex as string : generatePostHashHex(),
         PosterPublicKeyBase58Check: profile?.PublicKeyBase58Check,
@@ -474,6 +487,13 @@ export function CreatePostComponent(
         setPostText(replaceMention);
         setInternalPostText(value);
         inputRef?.focus();
+    }
+
+    function onRemoveVideoLink(): void {
+        setInternalVideoLink('');
+        internalVideoLinkRef.current = '';
+        setVideoLink('');
+        setInsertVideo(false);
     }
 
     return <ScrollView
@@ -540,7 +560,7 @@ export function CreatePostComponent(
             insertVideo && internalVideoLink ?
                 <View>
                     <View style={styles.removeButtonContainer}>
-                        <TouchableOpacity style={styles.removeButton} onPress={() => { setInternalVideoLink(''); setVideoLink(''); setInsertVideo(false); }}>
+                        <TouchableOpacity style={styles.removeButton} onPress={onRemoveVideoLink}>
                             <Fontisto name="close-a" size={14} color="white" />
                         </TouchableOpacity>
                     </View>
