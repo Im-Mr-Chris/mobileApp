@@ -6,6 +6,8 @@ import { ParamListBase } from '@react-navigation/routers';
 import { snackbar } from '@services/snackbar';
 import { colors } from '../styles';
 import SearchHistoryHeaderComponent from './searchHistoryHeader.component';
+// This is need to prevent keyboard bug when trying to scroll and the keyboard is open
+import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
@@ -73,22 +75,25 @@ export default class CloutTagHistoryCardComponentComponent extends React.Compone
             activeOpacity={1}
             onPress={() => this.goToCloutTag(item)}
             style={[styles.container, { backgroundColor: colors[index] }]}>
-            <Text style={[styles.cloutTag, index >= 0 && index < 3 && { fontWeight: 'bold' }]}>#{item}</Text>
+            <Text style={[styles.cloutTag]}>#{item}</Text>
         </TouchableOpacity>;
 
         return <View>
             <SearchHistoryHeaderComponent
                 isClearHistoryLoading={this.state.isClearHistoryLoading}
                 clearSearchHistory={this.clearSearchHistory} />
-            <FlatList
-                horizontal
-                bounces={false}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.flatListStyle}
-                data={this.state.cloutTagsHistory}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-            />
+
+            <TouchableOpacityGesture>
+                <FlatList
+                    horizontal
+                    bounces={false}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.flatListStyle}
+                    data={this.state.cloutTagsHistory}
+                    renderItem={renderItem}
+                    keyExtractor={keyExtractor}
+                />
+            </TouchableOpacityGesture>
         </View>;
     }
 }
@@ -108,8 +113,9 @@ const styles = StyleSheet.create(
             borderRadius: 50,
         },
         cloutTag: {
-            fontSize: 12,
-            color: 'white'
+            fontSize: 13,
+            color: 'white',
+            fontWeight: 'bold'
         },
     }
 );
