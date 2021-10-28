@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { CloutTag } from '@types';
 import { ParamListBase } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { updateCloutTagHistory } from '../services/searchHistoryHelpers';
 
 interface Props {
     cloutTag: CloutTag;
@@ -16,32 +17,31 @@ export default class CloutTagListCardComponent extends React.Component<Props> {
     constructor(props: Props) {
         super(props);
 
-        this.navigateToPost = this.navigateToPost.bind(this);
+        this.goToCloutTag = this.goToCloutTag.bind(this);
     }
 
-    shouldComponentUpdate(p_nextProps: Props) {
+    shouldComponentUpdate(p_nextProps: Props): boolean {
         return this.props.cloutTag !== p_nextProps.cloutTag;
     }
 
-    navigateToPost() {
+    private goToCloutTag(): void {
+        updateCloutTagHistory(this.props.cloutTag.clouttag);
         this.props.navigation.navigate('CloutTagPosts', { cloutTag: this.props.cloutTag.clouttag });
     }
 
-    render() {
-        return (
-            <TouchableOpacity
-                style={[styles.container]}
-                activeOpacity={0.7}
-                onPress={() => this.navigateToPost()}>
-                <View style={[styles.cloutTagContainer, themeStyles.lightBorderColor]}>
-                    <Feather name="hash" size={22} color={themeStyles.fontColorMain.color} />
-                </View>
-                <View>
-                    <Text style={[styles.cloutTag, themeStyles.fontColorMain]}>#{this.props.cloutTag.clouttag}</Text>
-                    <Text style={[themeStyles.fontColorSub, styles.count]}>{this.props.cloutTag.count} posts</Text>
-                </View>
-            </TouchableOpacity>
-        );
+    render(): JSX.Element {
+        return <TouchableOpacity
+            style={[styles.container]}
+            activeOpacity={0.7}
+            onPress={this.goToCloutTag}>
+            <View style={[styles.cloutTagContainer, themeStyles.lightBorderColor]}>
+                <Feather name="hash" size={22} color={themeStyles.fontColorMain.color} />
+            </View>
+            <View>
+                <Text style={[styles.cloutTag, themeStyles.fontColorMain]}>#{this.props.cloutTag.clouttag}</Text>
+                <Text style={[themeStyles.fontColorSub, styles.count]}>{this.props.cloutTag.count} posts</Text>
+            </View>
+        </TouchableOpacity>;
     }
 }
 

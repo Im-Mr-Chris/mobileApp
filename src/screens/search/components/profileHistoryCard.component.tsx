@@ -1,13 +1,14 @@
 import { themeStyles } from '@styles/globalColors';
 import React from 'react';
-import { Text, StyleSheet, View, ActivityIndicator, TouchableOpacity, FlatList, Image } from 'react-native';
+import { Text, StyleSheet, View, TouchableOpacity, FlatList, Image } from 'react-native';
 import { SearchHistoryProfile } from '@types';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons, } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/routers';
 import { snackbar } from '@services/snackbar';
 // this is needed to prevent changing tab on scroll
 import { TouchableOpacity as TouchableOpacityGesture } from 'react-native-gesture-handler';
+import SearchHistoryHeaderComponent from './searchHistoryHeader.component';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
@@ -35,7 +36,6 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
             historyProfiles: this.props.historyProfiles
         };
 
-        this.toggleShowClearText = this.toggleShowClearText.bind(this);
         this.goToProfile = this.goToProfile.bind(this);
         this.clearSearchHistory = this.clearSearchHistory.bind(this);
     }
@@ -48,10 +48,6 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
         this._isMounted = false;
     }
 
-    private toggleShowClearText(): void {
-        this.setState({ showClearText: !this.state.showClearText });
-    }
-
     private async clearSearchHistory() {
         this.setState({ isClearHistoryLoading: true });
         await this.props.clearSearchHistory();
@@ -59,7 +55,7 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
         snackbar.showSnackBar({ text: 'History cleared successfully' });
 
         if (this._isMounted) {
-            this.setState({ historyProfiles: [], isClearHistoryLoading: false, showClearText: false });
+            this.setState({ historyProfiles: [], isClearHistoryLoading: false });
         }
     }
 
@@ -76,8 +72,6 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
     }
 
     render(): JSX.Element {
-        const clearBackgroundColor = themeStyles.verificationBadgeBackgroundColor.backgroundColor;
-
         const keyExtractor = (item: SearchHistoryProfile, index: number): string => `${item.PublicKeyBase58Check}_${index}`;
         const renderItems = ({ item }: { item: SearchHistoryProfile }): JSX.Element => <TouchableOpacity
             activeOpacity={1}
@@ -95,34 +89,10 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
         </TouchableOpacity>;
 
         return <>
-            <View style={styles.headerRow}>
-                <Text style={[styles.historyTitle, themeStyles.fontColorMain]}>Recent Searches</Text>
-                <View style={{ height: 30 }}>
-                    {
-                        this.state.isClearHistoryLoading ?
-                            <ActivityIndicator color={themeStyles.fontColorMain.color} size={'small'} /> :
-                            this.state.showClearText ?
-                                <View style={styles.row}>
-                                    <TouchableOpacity
-                                        activeOpacity={1}
-                                        onPress={this.toggleShowClearText}>
-                                        <Text style={[{ marginRight: 10 }, styles.clearText, themeStyles.fontColorMain]}>Cancel</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        activeOpacity={1}
-                                        onPress={this.clearSearchHistory}
-                                        style={[styles.clearButton, { backgroundColor: clearBackgroundColor }]}>
-                                        <Text style={styles.clearText}>Clear</Text>
-                                    </TouchableOpacity>
-                                </View>
-                                :
-                                <TouchableOpacity onPress={this.toggleShowClearText} activeOpacity={1}>
-                                    <Ionicons name="close-circle-sharp" size={20} color={clearBackgroundColor} />
-                                </TouchableOpacity>
-                    }
-                </View>
-            </View>
-            <TouchableOpacityGesture>
+            <SearchHistoryHeaderComponent
+                isClearHistoryLoading={this.state.isClearHistoryLoading}
+                clearSearchHistory={this.clearSearchHistory} />
+            <TouchableOpacityGesture activeOpacity={1}>
                 <FlatList
                     horizontal
                     bounces={false}
@@ -132,7 +102,6 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
                     keyExtractor={keyExtractor}
                     renderItem={renderItems}
                 />
-                <Text style={[styles.historyTitle, themeStyles.fontColorMain]}>Top Creators</Text>
             </TouchableOpacityGesture>
         </>;
     }
@@ -140,33 +109,6 @@ export default class ProfileHistoryCardComponent extends React.Component<Props, 
 
 const styles = StyleSheet.create(
     {
-        clearButton: {
-            width: 40,
-            height: 20,
-            borderRadius: 20,
-            justifyContent: 'center',
-            alignItems: 'center'
-        },
-        clearText: {
-            fontSize: 10,
-            color: 'white',
-        },
-        headerRow: {
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingRight: 10,
-            paddingTop: 10
-        },
-        row: {
-            flexDirection: 'row',
-            alignItems: 'center'
-        },
-        historyTitle: {
-            fontSize: 17,
-            fontWeight: 'bold',
-            paddingLeft: 10
-        },
         flatListStyle: {
             marginVertical: 20,
             paddingRight: 10,

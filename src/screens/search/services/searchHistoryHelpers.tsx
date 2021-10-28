@@ -13,7 +13,6 @@ export async function updateSearchHistory(profile: SearchHistoryProfile): Promis
     const key = `${globals.user.publicKey}_${constants.localStorage_searchHistoryProfiles}`;
     try {
         const historyProfilesJson = await AsyncStorage.getItem(key);
-
         if (historyProfilesJson) {
             const historyProfiles = JSON.parse(historyProfilesJson);
             if (historyProfiles) {
@@ -37,6 +36,32 @@ export async function updateSearchHistory(profile: SearchHistoryProfile): Promis
             await AsyncStorage.setItem(key, newSearchHistoryProfilesJson);
         } else {
             const newSearchHistoryProfilesJson = JSON.stringify([profile]);
+            await AsyncStorage.setItem(key, newSearchHistoryProfilesJson);
+        }
+    } catch { }
+}
+
+export async function updateCloutTagHistory(clouttag: string): Promise<void> {
+
+    const key = `${globals.user.publicKey}_${constants.localStorage_searchHistoryCloutTags}`;
+    try {
+        const historyCloutTagsJson = await AsyncStorage.getItem(key);
+        if (historyCloutTagsJson) {
+            const historyCloutTags = JSON.parse(historyCloutTagsJson);
+            let newSearchHistoryCloutTags = historyCloutTags;
+            if (!historyCloutTags.includes(clouttag)) {
+                newSearchHistoryCloutTags = [clouttag, ...historyCloutTags];
+                if (historyCloutTags.length > 7) {
+                    historyCloutTags?.splice(historyCloutTags?.length - 1);
+                    newSearchHistoryCloutTags = historyCloutTags;
+                    newSearchHistoryCloutTags?.unshift(clouttag);
+                }
+            }
+            const newHistoryCloutTags = newSearchHistoryCloutTags.sort((a: string, b: string) => a === clouttag ? -1 : b === clouttag ? 1 : 0);
+            const newSearchHistoryProfilesJson = JSON.stringify(newHistoryCloutTags);
+            await AsyncStorage.setItem(key, newSearchHistoryProfilesJson);
+        } else {
+            const newSearchHistoryProfilesJson = JSON.stringify([clouttag]);
             await AsyncStorage.setItem(key, newSearchHistoryProfilesJson);
         }
     } catch { }

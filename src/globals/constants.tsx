@@ -15,6 +15,7 @@ export const constants = {
     localStorage_hiddenNFTType: '_hiddenNFTType',
     localStorage_cloutCastFeedEnabled: '_cloutCastFeedEnabled',
     localStorage_searchHistoryProfiles: '_searchHistoryProfiles',
+    localStorage_searchHistoryCloutTags: '_searchHistoryCloutTags',
     localStorage_coinPriceHidden: '_coinPriceHidden',
     localStorage_nftsHidden: '_nftsHidden',
     localStorage_cloutFeedHapticsEnabled: '_cloutFeedHapticsEnabled',

@@ -205,6 +205,7 @@ export class CreatorsSearchScreen extends React.Component<Props, State> {
                     handleSearchHistory={this.handleSearchHistory}
                     historyProfiles={this.state.historyProfiles}
                 />
+                <Text style={[styles.historyTitle, themeStyles.fontColorMain]}>Top Creators</Text>
             </Animated.View> :
             <></>;
 
@@ -241,6 +242,11 @@ const styles = StyleSheet.create(
             fontSize: 15,
             textAlign: 'center',
             marginTop: 40,
+        },
+        historyTitle: {
+            fontSize: 17,
+            fontWeight: 'bold',
+            paddingLeft: 10
         },
     }
 );
