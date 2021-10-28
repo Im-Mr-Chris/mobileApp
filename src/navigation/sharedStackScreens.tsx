@@ -107,16 +107,17 @@ export const SharedStackScreens = [
         component: CreatePostScreen
     },
     {
-        options: ({ route }: any) => (
-            {
-                headerTitle: 'Drafts',
-                headerTitleStyle: {
-                    marginRight: Platform.OS === 'ios' ? 0 : 50,
-                    alignSelf: 'center',
-                    color: themeStyles.fontColorMain.color
-                },
-            }
-        ),
+        options:
+            () => (
+                {
+                    headerTitle: 'Drafts',
+                    headerTitleStyle: {
+                        marginRight: Platform.OS === 'ios' ? 0 : 50,
+                        alignSelf: 'center',
+                        color: themeStyles.fontColorMain.color
+                    },
+                }
+            ),
         name: 'DraftPosts',
         component: DraftPostsScreen
     },
@@ -200,6 +201,7 @@ export const SharedStackScreens = [
                 {
                     headerTitle: route.params?.username ? route.params?.username : 'NFT',
                     headerBackTitle: ' ',
+                    headerTitleStyle: { color: themeStyles.fontColorMain.color, fontSize: 20, alignSelf: 'center' },
                     headerRight: () => <></>
                 }
             ),
@@ -208,21 +210,27 @@ export const SharedStackScreens = [
     },
     {
         options:
-        {
-            headerTitle: 'Bid Editions',
-            headerBackTitle: ' ',
-            headerRight: () => <></>
-        },
+            () => (
+                {
+                    headerTitle: 'Bid Editions',
+                    headerBackTitle: ' ',
+                    headerTitleStyle: { fontSize: 20, alignSelf: 'center' },
+                    headerRight: () => <></>
+                }
+            ),
         name: 'BidEditions',
         component: BidEditionsScreen
     },
     {
         options:
-        {
-            headerTitle: 'Edit Auctions',
-            headerBackTitle: ' ',
-            headerRight: () => <></>
-        },
+            () => (
+                {
+                    headerTitle: 'Edit Auctions',
+                    headerBackTitle: ' ',
+                    headerTitleStyle: { color: themeStyles.fontColorMain.color, fontSize: 20, alignSelf: 'center' },
+                    headerRight: () => <></>
+                }
+            ),
         name: 'AuctionTabNavigator',
         component: AuctionsTabNavigator
     },
