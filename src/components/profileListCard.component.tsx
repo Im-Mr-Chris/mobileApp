@@ -53,7 +53,7 @@ export function ProfileListCardComponent({ profile, isFollowing, handleSearchHis
                     setFollowing((p_previous) => !p_previous);
                 }
 
-                if (isMounted.current) {
+                if (following) {
                     cache.removeFollower(profile.PublicKeyBase58Check);
                 } else {
                     cache.addFollower(profile.PublicKeyBase58Check);
