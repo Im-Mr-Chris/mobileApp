@@ -53,6 +53,7 @@ export function LoginWithUsername(props: Props): JSX.Element {
 
                     globals.user = { publicKey: publicKey, username: profile.Username };
                     globals.readonly = true;
+                    globals.derived = false;
                     globals.onLoginSuccess();
                     loggedIn = true;
                 }

@@ -1,7 +1,8 @@
 import { ParamListBase, useNavigation } from '@react-navigation/core';
 import { StackNavigationProp } from '@react-navigation/stack';
-import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { authenticateWithDeSoIdentity } from '@services/authorization/deSoAuthentication';
 
 interface Props {
     onLoginWithUsername: () => void;
@@ -11,6 +12,38 @@ export function LoginOptions(props: Props): JSX.Element {
 
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
+    const [isWorking, setIsWorking] = useState(false);
+    const isMounted = useRef(false);
+
+    useEffect(
+        () => {
+            isMounted.current = true;
+
+            return () => {
+                isMounted.current = false;
+            };
+        },
+        []
+    );
+
+    const loginWithDeSoIdentity = async () => {
+        if (isMounted.current) {
+            setIsWorking(true);
+        }
+
+        await authenticateWithDeSoIdentity();
+
+        if (isMounted.current) {
+            setIsWorking(false);
+        }
+    };
+
+    if (isWorking) {
+        return <ActivityIndicator
+            style={styles.indicator}
+            size={'large'} />;
+    }
+
     return <View style={styles.loginOptionsContainer}>
         <Text style={styles.modeText}>Read-Only Mode</Text>
         <TouchableOpacity
@@ -19,6 +52,15 @@ export function LoginOptions(props: Props): JSX.Element {
             activeOpacity={1}
         >
             <Text style={styles.loginButtonText}>Login with Username</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.modeText}>Full Access Mode</Text>
+        <TouchableOpacity
+            style={[styles.loginButton, { marginBottom: 10 }]}
+            onPress={() => loginWithDeSoIdentity()}
+            activeOpacity={1}
+        >
+            <Text style={styles.loginButtonText}>Login with DeSo Identity</Text>
         </TouchableOpacity>
 
         <Text style={styles.modeText}>Full Access Mode</Text>
@@ -38,6 +80,9 @@ export function LoginOptions(props: Props): JSX.Element {
 
 const styles = StyleSheet.create(
     {
+        indicator: {
+            marginTop: 50,
+        },
         loginButton: {
             backgroundColor: 'black',
             color: 'white',

@@ -65,8 +65,23 @@ function publicKeyToECBuffer(publicKey: string): Buffer {
     const payload = Uint8Array.from(decoded).slice(3);
     const ec = new EC('secp256k1');
     const publicKeyEC = ec.keyFromPublic(payload, 'array');
-
     return new Buffer(publicKeyEC.getPublic('array'));
+}
+
+function compressPublicKey(publicKey: string): string {
+    const decoded = bs58check.decode(publicKey);
+    const payload = Uint8Array.from(decoded).slice(3);
+    const ec = new EC('secp256k1');
+    const publicKeyEC = ec.keyFromPublic(payload, 'array');
+    return publicKeyEC.getPublic(true, 'hex');
+}
+
+function aesDecryptHex(counter: string, key: string, data: string): string {
+    const counterBuffer = Buffer.from(counter, 'hex');
+    const keyBuffer = Buffer.from(key, 'hex');
+    const dataBuffer = Buffer.from(data, 'hex');
+
+    return ecies.aesCtrDecrypt(counterBuffer, keyBuffer, dataBuffer);
 }
 
 const ecies = require('./ecies');
@@ -81,5 +96,7 @@ export const crypto = {
     mnemonicToSeedHex,
     aesEncrypt: (counter: Buffer, key: Buffer, data: Buffer): string => ecies.aesCtrEncrypt(counter, key, data),
     aesDecrypt: (counter: Buffer, key: Buffer, data: Buffer): string => ecies.aesCtrDecrypt(counter, key, data),
-    publicKeyToECBuffer
+    aesDecryptHex,
+    publicKeyToECBuffer,
+    compressPublicKey
 };

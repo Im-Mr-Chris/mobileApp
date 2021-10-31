@@ -10,6 +10,10 @@ import { StackNavigationProp } from '@react-navigation/stack';
 export function MessagesHeaderComponent(): JSX.Element {
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
+    if (globals.readonly || globals.derived) {
+        return <></>;
+    }
+
     return <View style={[styles.container, themeStyles.containerColorMain, themeStyles.borderColor]}>
         <TouchableOpacity
             style={styles.headerIcon}

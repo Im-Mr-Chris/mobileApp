@@ -1,3 +1,5 @@
+import { globals } from '../../globals';
+
 const headers = {
     'content-type': 'application/json',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.1 Safari/605.1.15'
@@ -5,11 +7,18 @@ const headers = {
 
 const host = 'https://bitclout.com/api/v0/';
 
-function handleResponse(p_response: Response) {
+async function handleResponse(p_response: Response) {
     if (p_response.ok) {
         return p_response.json().catch(() => { });
     } else {
-        const error = new Error(JSON.stringify(p_response));
+        let json = undefined;
+        try {
+            json = await p_response.json();
+        } catch {
+        }
+        const error = new Error();
+        (error as any).response = p_response;
+        (error as any).json = json;
         (error as any).status = p_response.status;
         throw error;
     }
@@ -36,37 +45,8 @@ const post = (p_route: string, p_body: any) => {
             method: 'POST',
             body: JSON.stringify(p_body)
         }
-    ).then(p_response => handleResponse(p_response));
+    ).then(async p_response => await handleResponse(p_response));
 };
-
-function login(p_mnemonic: string, p_entropyHex: string, p_seedHex: string) {
-    const route = 'create-user-stateless';
-    return post(
-        route,
-        {
-            entropyHex: p_entropyHex,
-            mnemonic: p_mnemonic,
-            seedHex: p_seedHex,
-            username: '',
-            referrerPublicKeyBase58Check: '',
-            extraText: '',
-            password: ''
-        }
-    );
-}
-
-function logout(p_userKey: string) {
-    const route = 'logout';
-
-    return post(
-        route,
-        {
-            PublicKeyBase58Check: p_userKey,
-            SeedText: 'my seed phrase is safe',
-            ExtraText: ''
-        }
-    );
-}
 
 function getGlobalPosts(p_userKey: string, p_count: number, p_lastPostHash = '') {
     const route = 'get-posts-stateless';
@@ -134,7 +114,7 @@ function likePost(p_userKey: string, p_postHash: string, isUnlike: boolean) {
             ReaderPublicKeyBase58Check: p_userKey,
             LikedPostHashHex: p_postHash,
             IsUnlike: isUnlike,
-            MinFeeRateNanosPerKB: 1000,
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB(),
             SeedInfo: null,
             Password: '',
             Sign: true,
@@ -152,7 +132,7 @@ function sendDiamonds(p_userPublicKey: string, p_receiverPublicKey: string, p_po
         {
             DiamondLevel: p_diamondLevel,
             DiamondPostHashHex: p_postHashHex,
-            MinFeeRateNanosPerKB: 1000,
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB(),
             ReceiverPublicKeyBase58Check: p_receiverPublicKey,
             SenderPublicKeyBase58Check: p_userPublicKey
         }
@@ -229,7 +209,7 @@ function createPost(
             CreatorBasisPoints: 0,
             StakeMultipleBasisPoints: 12500,
             IsHidden: false,
-            MinFeeRateNanosPerKB: 1000,
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB(),
             SeedInfo: null,
             Password: '',
             Sign: true,
@@ -257,7 +237,7 @@ function hidePost(p_userKey: string, p_postHashHex: string, p_bodyText: string, 
             CreatorBasisPoints: 0,
             StakeMultipleBasisPoints: 0,
             IsHidden: true,
-            MinFeeRateNanosPerKB: 1000,
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB(),
             SeedInfo: null,
             Password: '',
             Sign: true,
@@ -444,7 +424,7 @@ function sendMessage(p_senderPublicKey: string, p_recipientPublicKey: string, p_
         route,
         {
             EncryptedMessageText: p_message,
-            MinFeeRateNanosPerKB: 1000,
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB(),
             RecipientPublicKeyBase58Check: p_recipientPublicKey,
             SenderPublicKeyBase58Check: p_senderPublicKey,
         }
@@ -530,7 +510,7 @@ function createFollow(p_userKey: string, p_followedUserKey: string, p_isUnFollow
         {
             FollowedPublicKeyBase58Check: p_followedUserKey,
             FollowerPublicKeyBase58Check: p_userKey,
-            MinFeeRateNanosPerKB: 1000,
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB(),
             IsUnfollow: p_isUnFollow
         }
     );
@@ -602,7 +582,7 @@ async function uploadImageAndroid(p_publicKey: string, p_jwt: string, p_image: a
     xhr.send(formData);
     const promise = new Promise(
         (p_resolve, p_error) => {
-            xhr.onreadystatechange = e => {
+            xhr.onreadystatechange = () => {
                 if (xhr.readyState !== 4) {
                     return;
                 }
@@ -649,15 +629,68 @@ function updateProfile(
             NewCreatorBasisPoints: p_founderRewards,
             NewStakeMultipleBasisPoints: 12500,
             IsHidden: false,
-            MinFeeRateNanosPerKB: 1000
+            MinFeeRateNanosPerKB: getMinFeeRateNanosPerKB()
         }
     );
 }
 
-export const api = {
-    login,
-    logout,
-    getGlobalPosts,
+function authorizeDerivedKey(
+    publicKey: string,
+    derivedPublicKey: string,
+    accessSignature: string,
+    expirationBlock: number,
+    deleteKey: boolean
+) {
+    const route = 'authorize-derived-key';
+
+    return post(
+        route,
+        {
+            OwnerPublicKeyBase58Check: publicKey,
+            DerivedPublicKeyBase58Check: derivedPublicKey,
+            ExpirationBlock: expirationBlock,
+            AccessSignature: accessSignature,
+            DeleteKey: deleteKey,
+            MinFeeRateNanosPerKB: 10000
+        }
+    );
+}
+
+function appendExtraDataToTransaction(
+    transactionHex: string,
+    derivedPublicKey: string
+) {
+    const route = 'append-extra-data';
+
+    return post(
+        route,
+        {
+            TransactionHex: transactionHex,
+            ExtraData: {
+                DerivedPublicKey: derivedPublicKey
+            }
+        }
+    );
+}
+
+function getUsersDerivedKeys(
+    publicKey: string
+) {
+    const route = 'get-user-derived-keys';
+
+    return post(
+        route,
+        {
+            PublicKeyBase58Check: publicKey
+        }
+    );
+}
+
+function getMinFeeRateNanosPerKB() {
+    return globals.derived ? 10000 : 1000;
+}
+
+export const api = {    getGlobalPosts,
     getFollowingPosts,
     likePost,
     getProfile,
@@ -692,5 +725,8 @@ export const api = {
     getLikesForPost,
     getRecloutersForPost,
     getDiamondSendersForPost,
-    getQuotesForPost
+    getQuotesForPost,
+    authorizeDerivedKey,
+    appendExtraDataToTransaction,
+    getUsersDerivedKeys
 };

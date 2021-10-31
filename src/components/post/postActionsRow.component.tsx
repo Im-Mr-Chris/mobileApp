@@ -99,7 +99,7 @@ export class PostActionsRow extends React.Component<Props, State> {
             const signedTransactionHex = await signing.signTransaction(transactionHex);
             await api.submitTransaction(signedTransactionHex);
 
-        } catch {
+        } catch (e: any) {
             post.PostEntryReaderState.LikedByReader = originalLikedByReader;
             if (post.PostEntryReaderState.LikedByReader) {
                 post.LikeCount++;

@@ -16,6 +16,7 @@ import { EventType } from '@types';
 import { FlatList } from 'react-native-gesture-handler';
 import ProfileInfoCardComponent from './profileInfo/profileInfoCard.component';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { authenticateWithDeSoIdentity } from '@services/authorization/deSoAuthentication';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
@@ -43,7 +44,7 @@ export class ProfileManagerComponent extends React.Component<Props, State> {
         this.loadData();
 
         this.selectAccount = this.selectAccount.bind(this);
-        this.addCount = this.addCount.bind(this);
+        this.addAccount = this.addAccount.bind(this);
         this.close = this.close.bind(this);
     }
 
@@ -94,9 +95,33 @@ export class ProfileManagerComponent extends React.Component<Props, State> {
         globals.onLoginSuccess();
     }
 
-    private addCount() {
+    private addAccount() {
         this.close(false);
-        this.props.navigation.navigate('Identity', { addAccount: true });
+        setTimeout(
+            () => {
+                const options = ['Login with DeSo Identity', 'Login with CloutFeed Identity', 'Cancel'];
+                const callback = (optionIndex: number) => {
+                    switch (optionIndex) {
+                        case 0:
+                            authenticateWithDeSoIdentity();
+                            break;
+                        case 1:
+                            this.props.navigation.navigate('Identity', { addAccount: true });
+                            break;
+                    }
+                };
+
+                eventManager.dispatchEvent(
+                    EventType.ToggleActionSheet,
+                    {
+                        visible: true,
+                        config: { options, callback, destructiveButtonIndex: [] }
+                    }
+                );
+            }
+            , 250
+        );
+
     }
 
     private close(p_animated = true) {
@@ -132,7 +157,7 @@ export class ProfileManagerComponent extends React.Component<Props, State> {
         const renderFooter = <TouchableOpacity
             style={styles.addAccountButton}
             activeOpacity={0.7}
-            onPress={() => this.addCount()}
+            onPress={() => this.addAccount()}
         >
             <AntDesign style={styles.addAccountButtonIcon} name="plus" size={22} color={themeStyles.fontColorMain.color} />
             <Text style={[styles.addAccountButtonText, themeStyles.fontColorMain]}>Add Account</Text>

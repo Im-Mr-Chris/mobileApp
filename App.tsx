@@ -28,12 +28,13 @@ import CloutFeedIntroduction from '@screens/introduction/cloutFeedIntroduction.s
 import TermsConditionsScreen from '@screens/login/termsAndConditions.screen';
 import ProfileInfoModalComponent from '@components/profileInfo/profileInfoModal.component';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
-import { Platform, StatusBar, View } from 'react-native';
+import { Alert, Platform, StatusBar, View } from 'react-native';
 import { AppState } from 'react-native';
 import { messagesService } from './src/services/messagesServices';
 import PlaceBidFormComponent from '@screens/nft/components/placeBidForm.component';
 import { UserContext } from '@globals/userContext';
 import { Post, HiddenNFTType } from '@types';
+import { authenticateWithDeSoIdentity, isDerivedKeyValid, revokeDerivedKey } from './src/services/authorization/deSoAuthentication';
 
 enableScreens();
 
@@ -159,7 +160,6 @@ export default function App(): JSX.Element {
 
   async function checkAuthenticatedUser() {
     try {
-
       const publicKey = await SecureStore.getItemAsync(constants.localStorage_publicKey);
       if (publicKey) {
         const cloutFeedIdentity = await SecureStore.getItemAsync(constants.localStorage_cloutFeedIdentity);
@@ -170,7 +170,30 @@ export default function App(): JSX.Element {
           setIsThemeSet(true);
           const readonlyValue = await SecureStore.getItemAsync(constants.localStorage_readonly);
           globals.readonly = readonlyValue !== 'false';
-          globals.onLoginSuccess();
+          globals.derived = await authentication.isAuthenticatedUserDerived(publicKey);
+
+          if (globals.derived) {
+            const isValid = await isDerivedKeyValid(publicKey);
+
+            if (isValid) {
+              globals.onLoginSuccess();
+            } else {
+              const title = 'Login Expired';
+              const body = 'Your DeSo credentials have been expired. Please use DeSo Identity to login again into the account: ' + publicKey;
+              Alert.alert(
+                title,
+                body,
+                [
+                  {
+                    text: 'Ok',
+                    onPress: () => authenticateWithDeSoIdentity(publicKey)
+                  }
+                ]
+              );
+            }
+          } else {
+            globals.onLoginSuccess();
+          }
         } else {
           await SecureStore.deleteItemAsync(constants.localStorage_publicKey);
           await SecureStore.deleteItemAsync(constants.localStorage_readonly);
@@ -189,6 +212,7 @@ export default function App(): JSX.Element {
         }
       }
     } catch {
+      Alert.alert('Something went wrong. Please try again');
       return;
     }
   }
@@ -227,7 +251,6 @@ export default function App(): JSX.Element {
         setFollowerFeatures(p_responses[0]);
 
         globals.user.username = p_responses[0].ProfileEntryResponse?.Username;
-
         const key = globals.user.publicKey + constants.localStorage_nftsHidden;
         const areNFTsHidden = await SecureStore.getItemAsync(key).catch(() => undefined);
 
@@ -278,6 +301,7 @@ export default function App(): JSX.Element {
     if (globals.readonly === false) {
       const jwt = await signing.signJWT();
       cloutFeedApi.unregisterNotificationsPushToken(globals.user.publicKey, jwt).catch(() => undefined);
+      await revokeDerivedKey(globals.user.publicKey).catch(() => undefined);
       await authentication.removeAuthenticatedUser(globals.user.publicKey);
       window.clearInterval(notificationsInterval.current);
       window.clearInterval(messagesInterval.current);
@@ -289,6 +313,7 @@ export default function App(): JSX.Element {
         await SecureStore.setItemAsync(constants.localStorage_readonly, 'false');
         globals.user = { publicKey, username: '' };
         globals.readonly = false;
+        globals.derived = await authentication.isAuthenticatedUserDerived(publicKey);
         globals.onLoginSuccess();
         return;
       }

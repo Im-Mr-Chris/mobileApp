@@ -1,13 +1,17 @@
 import { crypto } from './crypto';
-import * as SecureStore from 'expo-secure-store';
-import { SecureStoreAuthenticatedUserEncryptionKey, SecureStoreAuthenticatedUser } from '@types';
+import { DerivedAuthenticatedUser } from '@types';
 import KeyEncoder from 'key-encoder';
-import { constants } from '@globals/constants';
 import { globals } from '@globals/globals';
-const sha256 = require('sha256');
-const ecies = require('./ecies');
+import { authentication } from './authentication';
+import { api } from '../api/api';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sha256 = require('sha256');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ecies = require('./ecies');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const rs = require('jsrsasign');
+
 const JWS = rs.jws.JWS;
 
 const header = { alg: 'ES256', typ: 'JWT' };
@@ -15,53 +19,56 @@ const header = { alg: 'ES256', typ: 'JWT' };
 async function getSeedHex(): Promise<string> {
     const publicKey = globals.user.publicKey;
 
-    const usersJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsers);
+    const { user, key: userKey } = await authentication.getAuthenticatedUser(publicKey);
 
-    let users: SecureStoreAuthenticatedUser = {};
-    if (usersJson) {
-        users = JSON.parse(usersJson);
-    }
+    const encryptedSeedHex = user.derived ?
+        new Buffer((user as DerivedAuthenticatedUser).encryptedDerivedSeedHex, 'hex') :
+        new Buffer(user.encryptedSeedHex, 'hex');
 
-    const keyJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsersEncryptionKeys);
-    let keys: SecureStoreAuthenticatedUserEncryptionKey = {};
-    if (keyJson) {
-        keys = JSON.parse(keyJson);
-    }
-
-    const user = users[publicKey];
-    const userKey = keys[publicKey];
-
-    const encryptedSeedHex = new Buffer(user.encryptedSeedHex, 'hex');
     const key = new Buffer(userKey.key, 'hex');
     const iv = new Buffer(userKey.iv, 'hex');
 
     let seedHex = '';
     seedHex = crypto.aesDecrypt(iv, key, encryptedSeedHex);
-
     return seedHex;
 }
 
 const signJWT = async (): Promise<string> => {
-    const seedHex = await getSeedHex();
-    const keyEncoder = new KeyEncoder('secp256k1');
-    const encodedPrivateKey = keyEncoder.encodePrivate(seedHex, 'raw', 'pem');
+    if (!globals.derived) {
+        const seedHex = await getSeedHex();
+        const keyEncoder = new KeyEncoder('secp256k1');
+        const encodedPrivateKey = keyEncoder.encodePrivate(seedHex, 'raw', 'pem');
 
-    const expDate = new Date();
-    expDate.setHours(expDate.getHours() + 1);
-    expDate.setSeconds(expDate.getSeconds() + 20);
+        const expDate = new Date();
+        expDate.setHours(expDate.getHours() + 1);
+        expDate.setSeconds(expDate.getSeconds() + 20);
 
-    const signedJWT = JWS.sign(
-        header.alg,
-        JSON.stringify(header),
-        JSON.stringify({ exp: Math.floor(expDate.getTime() / 1000) }),
-        encodedPrivateKey
-    );
-
-    return signedJWT;
+        return JWS.sign(
+            header.alg,
+            JSON.stringify(header),
+            JSON.stringify({ exp: Math.floor(expDate.getTime() / 1000) }),
+            encodedPrivateKey
+        );
+    } else {
+        const { user, key } = await authentication.getAuthenticatedUser(globals.user.publicKey);
+        const jwt = crypto.aesDecryptHex(key.iv, key.key, (user as DerivedAuthenticatedUser).encryptedJwt);
+        return jwt;
+    }
 };
 
-const signTransaction = async (transactionHex: string): Promise<string> => {
-    const seedHex = await getSeedHex();
+const signTransaction = async (transactionHex: string, seedHex?: string, ignoreDerived = false): Promise<string> => {
+    if (globals.derived && !ignoreDerived) {
+        const { user } = await authentication.getAuthenticatedUser(globals.user.publicKey);
+        const appendExtraDataResponse = await api.appendExtraDataToTransaction(
+            transactionHex,
+            (user as DerivedAuthenticatedUser).compressedDerivedPublicKey
+        );
+        transactionHex = appendExtraDataResponse.TransactionHex;
+    }
+
+    if (!seedHex) {
+        seedHex = await getSeedHex();
+    }
 
     const privateKey = crypto.seedHexToPrivateKey(seedHex);
 
@@ -78,7 +85,6 @@ const signTransaction = async (transactionHex: string): Promise<string> => {
             signatureBytes,
         ]
     );
-
     return signedTransactionBytes.toString('hex');
 };
 

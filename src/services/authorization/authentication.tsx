@@ -1,15 +1,15 @@
 import { crypto } from './crypto';
 import * as Random from 'expo-random';
-import { AuthenticatedUser, AuthenticatedUserEncryptionKey, AuthenticatedUserTypes, SecureStoreAuthenticatedUserEncryptionKey, SecureStoreAuthenticatedUser } from '@types';
+import { AuthenticatedUser, AuthenticatedUserEncryptionKey, AuthenticatedUserTypes, DerivedAuthentication, DerivedAuthenticatedUser, SecureStoreAuthenticatedUserEncryptionKeys, SecureStoreAuthenticatedUsers } from '@types';
 import * as SecureStore from 'expo-secure-store';
-import { constants } from '@globals/constants';
+import { constants } from '@globals';
 
 async function getAuthenticatedUserPublicKeys(): Promise<string[]> {
     let publicKeys: string[] = [];
 
     const usersJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsers);
 
-    let users: SecureStoreAuthenticatedUser = {};
+    let users: SecureStoreAuthenticatedUsers = {};
 
     if (usersJson) {
         users = JSON.parse(usersJson);
@@ -17,6 +17,35 @@ async function getAuthenticatedUserPublicKeys(): Promise<string[]> {
     }
 
     return publicKeys;
+}
+
+async function getAuthenticatedUser(publicKey: string): Promise<{ user: AuthenticatedUser | DerivedAuthenticatedUser, key: AuthenticatedUserEncryptionKey }> {
+    const usersJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsers);
+
+    let users: SecureStoreAuthenticatedUsers = {};
+    if (usersJson) {
+        users = JSON.parse(usersJson);
+    }
+
+    const keyJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsersEncryptionKeys);
+    let keys: SecureStoreAuthenticatedUserEncryptionKeys = {};
+    if (keyJson) {
+        keys = JSON.parse(keyJson);
+    }
+
+    let user = users[publicKey];
+
+    if (user.derived) {
+        const key = user.publicKey + constants.secureStore_derivedAuthentication;
+        const derivedUserJson = await SecureStore.getItemAsync(key);
+        if (derivedUserJson) {
+            user = JSON.parse(derivedUserJson);
+        }
+    }
+
+    const key = keys[publicKey];
+
+    return { user, key };
 }
 
 function authenticateUser(
@@ -54,7 +83,8 @@ function generateUserCredentials(keychain: any): { authenticatedUser: Authentica
 
     const authenticatedUser: AuthenticatedUser = {
         publicKey: publicKey,
-        encryptedSeedHex: encryptedSeedHex
+        encryptedSeedHex: encryptedSeedHex,
+        derived: false
     };
 
     const key: AuthenticatedUserEncryptionKey = {
@@ -65,23 +95,62 @@ function generateUserCredentials(keychain: any): { authenticatedUser: Authentica
     return { authenticatedUser, key };
 }
 
-async function addAuthenticatedUser(user: AuthenticatedUser, key: AuthenticatedUserEncryptionKey) {
+function encryptDerivedAuthenticatedUser(derivedAuthentication: DerivedAuthentication): { derivedAuthenticatedUser: DerivedAuthenticatedUser, key: AuthenticatedUserEncryptionKey } {
+    const randomKey = new Buffer(Random.getRandomBytes(32));
+    const iv = new Buffer(Random.getRandomBytes(16));
+
+    const expireDate = new Date();
+    expireDate.setDate(expireDate.getDate() + 26);
+
+    const derivedAuthenticatedUser: DerivedAuthenticatedUser = {
+        publicKey: derivedAuthentication.publicKey,
+        derivedPublicKey: derivedAuthentication.derivedPublicKey,
+        compressedDerivedPublicKey: derivedAuthentication.compressedDerivedPublicKey,
+        expirationBlock: derivedAuthentication.expirationBlock,
+        encryptedDerivedSeedHex: crypto.aesEncrypt(iv, randomKey, Buffer.from(derivedAuthentication.derivedSeedHex)),
+        encryptedJwt: crypto.aesEncrypt(iv, randomKey, Buffer.from(derivedAuthentication.jwt)),
+        encryptedDerivedJwt: crypto.aesEncrypt(iv, randomKey, Buffer.from(derivedAuthentication.derivedJwt)),
+        encryptedAccessSignature: crypto.aesEncrypt(iv, randomKey, Buffer.from(derivedAuthentication.accessSignature)),
+        derived: true,
+        expireDate
+    };
+
+    const key: AuthenticatedUserEncryptionKey = {
+        key: randomKey.toString('hex'),
+        iv: iv.toString('hex')
+    };
+
+    return { derivedAuthenticatedUser, key };
+}
+
+async function addAuthenticatedUser(user: AuthenticatedUser | DerivedAuthenticatedUser, key: AuthenticatedUserEncryptionKey) {
     const usersJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsers);
 
-    let users: SecureStoreAuthenticatedUser = {};
+    let users: SecureStoreAuthenticatedUsers = {};
 
     if (usersJson) {
         users = JSON.parse(usersJson);
     }
 
-    users[user.publicKey] = user;
+    if (user.derived) {
+        const authenticatedUser: AuthenticatedUser = {
+            publicKey: user.publicKey,
+            encryptedSeedHex: (user as DerivedAuthenticatedUser).encryptedDerivedSeedHex,
+            derived: true
+        };
+        users[user.publicKey] = authenticatedUser;
+        const key = user.publicKey + constants.secureStore_derivedAuthentication;
+        await SecureStore.setItemAsync(key, JSON.stringify(user));
+    } else {
+        users[user.publicKey] = user;
+    }
 
     const newUsersJson = JSON.stringify(users);
     await SecureStore.setItemAsync(constants.secureStore_authenticatedUsers, newUsersJson);
 
     const keyJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsersEncryptionKeys);
 
-    let keys: SecureStoreAuthenticatedUserEncryptionKey = {};
+    let keys: SecureStoreAuthenticatedUserEncryptionKeys = {};
 
     if (keyJson) {
         keys = JSON.parse(keyJson);
@@ -96,10 +165,17 @@ async function addAuthenticatedUser(user: AuthenticatedUser, key: AuthenticatedU
 async function removeAuthenticatedUser(publicKey: string) {
     const usersJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsers);
 
-    let users: SecureStoreAuthenticatedUser = {};
+    let users: SecureStoreAuthenticatedUsers = {};
 
     if (usersJson) {
         users = JSON.parse(usersJson);
+    }
+
+    const derived = users[publicKey]?.derived;
+
+    if (derived) {
+        const key = publicKey + constants.secureStore_derivedAuthentication;
+        await SecureStore.deleteItemAsync(key);
     }
 
     delete users[publicKey];
@@ -109,7 +185,7 @@ async function removeAuthenticatedUser(publicKey: string) {
 
     const keyJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsersEncryptionKeys);
 
-    let keys: SecureStoreAuthenticatedUserEncryptionKey = {};
+    let keys: SecureStoreAuthenticatedUserEncryptionKeys = {};
 
     if (keyJson) {
         keys = JSON.parse(keyJson);
@@ -121,9 +197,24 @@ async function removeAuthenticatedUser(publicKey: string) {
     await SecureStore.setItemAsync(constants.secureStore_authenticatedUsersEncryptionKeys, newKeysJson);
 }
 
+async function isAuthenticatedUserDerived(publicKey: string): Promise<boolean> {
+    const usersJson = await SecureStore.getItemAsync(constants.secureStore_authenticatedUsers);
+
+    let users: SecureStoreAuthenticatedUsers = {};
+    if (usersJson) {
+        users = JSON.parse(usersJson);
+        return users[publicKey]?.derived;
+    }
+
+    return false;
+}
+
 export const authentication = {
     getAuthenticatedUserPublicKeys,
+    getAuthenticatedUser,
     authenticateUser,
     addAuthenticatedUser,
-    removeAuthenticatedUser
+    removeAuthenticatedUser,
+    encryptDerivedAuthenticatedUser,
+    isAuthenticatedUserDerived
 };

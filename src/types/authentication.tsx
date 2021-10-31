@@ -3,20 +3,45 @@ export interface AuthenticatedUserTypes {
     nonStandard: { authenticatedUser: AuthenticatedUser, key: AuthenticatedUserEncryptionKey } | undefined
 }
 
-export interface SecureStoreAuthenticatedUser {
+export interface SecureStoreAuthenticatedUsers {
     [key: string]: AuthenticatedUser;
 }
 
-export interface SecureStoreAuthenticatedUserEncryptionKey {
+export interface SecureStoreAuthenticatedUserEncryptionKeys {
     [key: string]: AuthenticatedUserEncryptionKey;
 }
 
 export interface AuthenticatedUser {
     publicKey: string;
     encryptedSeedHex: string;
+    derived: boolean;
+}
+
+export interface DerivedAuthenticatedUser {
+    publicKey: string;
+    derivedPublicKey: string;
+    compressedDerivedPublicKey: string;
+    encryptedDerivedSeedHex: string;
+    encryptedDerivedJwt: string;
+    encryptedJwt: string;
+    encryptedAccessSignature: string;
+    expirationBlock: number;
+    derived: true;
+    expireDate: Date;
 }
 
 export interface AuthenticatedUserEncryptionKey {
     key: string;
     iv: string;
+}
+
+export interface DerivedAuthentication {
+    accessSignature: string;
+    derivedJwt: string;
+    derivedPublicKey: string;
+    compressedDerivedPublicKey: string;
+    derivedSeedHex: string;
+    expirationBlock: number;
+    jwt: string;
+    publicKey: string;
 }

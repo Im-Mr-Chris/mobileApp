@@ -180,32 +180,39 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
     }
 
     render(): JSX.Element {
+        if (globals.readonly) {
+            return <View style={[styles.infoMessageContainer, styles.container, themeStyles.containerColorSub]}>
+                <Text style={[styles.infoText, themeStyles.fontColorMain]}>Messages are not available in the read-only mode.</Text>
+            </View>;
+        }
+
+        if (globals.derived) {
+            return <View style={[styles.infoMessageContainer, styles.container, themeStyles.containerColorSub]}>
+                <Text style={[styles.infoText, themeStyles.fontColorMain]}>Messages are still not available when logging in with DeSo Identity right now. We are doing our best to support them as soon as possible. Otherwise, you can login with CloutFeed Identity for full support.</Text>
+            </View>;
+        }
+
         return <View style={[styles.container, themeStyles.containerColorMain]}>
             {
                 this.state.isLoading ?
                     <CloutFeedLoader />
                     :
-                    globals.readonly ?
-                        <View style={[styles.readOnlyText, styles.container, themeStyles.containerColorSub]}>
-                            <Text style={[themeStyles.fontColorMain]}>Messages are not available in the read-only mode.</Text>
-                        </View>
-                        :
-                        <View style={[styles.container, themeStyles.containerColorMain]}>
-                            <FlatList
-                                data={this.state.contacts}
-                                keyExtractor={(item, index) => item.PublicKeyBase58Check + index.toString()}
-                                renderItem={({ item }) => <ContactMessagesListCardComponent contactWithMessages={item}></ContactMessagesListCardComponent>}
-                                refreshControl={<RefreshControl
-                                    tintColor={themeStyles.fontColorMain.color}
-                                    titleColor={themeStyles.fontColorMain.color}
-                                    refreshing={this.state.refreshing}
-                                    onRefresh={() => this.loadMessages(this.state.messagesFilter, this.state.messagesSort)}
+                    <View style={[styles.container, themeStyles.containerColorMain]}>
+                        <FlatList
+                            data={this.state.contacts}
+                            keyExtractor={(item, index) => item.PublicKeyBase58Check + index.toString()}
+                            renderItem={({ item }) => <ContactMessagesListCardComponent contactWithMessages={item}></ContactMessagesListCardComponent>}
+                            refreshControl={<RefreshControl
+                                tintColor={themeStyles.fontColorMain.color}
+                                titleColor={themeStyles.fontColorMain.color}
+                                refreshing={this.state.refreshing}
+                                onRefresh={() => this.loadMessages(this.state.messagesFilter, this.state.messagesSort)}
 
-                                />}
-                                onEndReached={() => this.loadMoreMessages(this.state.messagesFilter, this.state.messagesSort)}
-                                ListFooterComponent={() => this.state.isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color}></ActivityIndicator> : <View></View>}
-                            />
-                        </View>
+                            />}
+                            onEndReached={() => this.loadMoreMessages(this.state.messagesFilter, this.state.messagesSort)}
+                            ListFooterComponent={() => this.state.isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color}></ActivityIndicator> : <View></View>}
+                        />
+                    </View>
             }
 
             {
@@ -227,9 +234,13 @@ const styles = StyleSheet.create(
             flex: 1,
             width: '100%'
         },
-        readOnlyText: {
+        infoMessageContainer: {
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            paddingHorizontal: 10
+        },
+        infoText: {
+            textAlign: 'center'
         }
     }
 );

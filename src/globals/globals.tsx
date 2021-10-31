@@ -15,6 +15,7 @@ export const globals = {
     setGlobalTheme: (p_theme: string) => { },
     pushNotificationsToken: '',
     readonly: true,
+    derived: false,
     hapticsEnabled: false,
     defaultHandleError: (p_error: any) => {
         if (p_error?.status === 429) {
