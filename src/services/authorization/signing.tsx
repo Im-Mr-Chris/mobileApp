@@ -47,7 +47,8 @@ const signJWT = async (): Promise<string> => {
     const encodedPrivateKey = keyEncoder.encodePrivate(seedHex, 'raw', 'pem');
 
     const expDate = new Date();
-    expDate.setSeconds(expDate.getSeconds() + 60);
+    expDate.setHours(expDate.getHours() + 1);
+    expDate.setSeconds(expDate.getSeconds() + 20);
 
     const signedJWT = JWS.sign(
         header.alg,

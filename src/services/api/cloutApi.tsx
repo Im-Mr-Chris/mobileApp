@@ -5,11 +5,18 @@ const headers = {
 
 const host = 'https://api.cloutapis.com/';
 
-function handleResponse(response: Response) {
+async function handleResponse(response: Response) {
     if (response.ok) {
         return response.json();
     } else {
-        const error = new Error(JSON.stringify(response));
+        let json = undefined;
+        try {
+            json = await response.json();
+        } catch {
+        }
+        const error = new Error();
+        (error as any).response = response;
+        (error as any).json = json;
         (error as any).status = response.status;
         throw error;
     }
@@ -19,7 +26,7 @@ const get = (route: string, useHost = true) => {
     return fetch(
         useHost ? host + route : route,
         { headers: headers }
-    ).then(p_response => handleResponse(p_response));
+    ).then(async p_response => await handleResponse(p_response));
 };
 
 const post = (p_route: string, p_body: any) => {
