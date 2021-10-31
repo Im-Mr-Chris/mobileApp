@@ -41,7 +41,8 @@ export function LoginOptions(props: Props): JSX.Element {
     if (isWorking) {
         return <ActivityIndicator
             style={styles.indicator}
-            size={'large'} />;
+            size={'large'}
+            color={'#ebebeb'} />;
     }
 
     return <View style={styles.loginOptionsContainer}>

@@ -99,6 +99,7 @@ const styles = StyleSheet.create(
             marginTop: 'auto',
             height: 100,
             fontSize: 16,
+            textAlignVertical: 'center'
         },
         signUpText: {
             alignSelf: 'flex-end',
