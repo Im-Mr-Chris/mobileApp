@@ -92,6 +92,7 @@ export class ProfileManagerComponent extends React.Component<Props, State> {
         await SecureStore.setItemAsync(constants.localStorage_readonly, 'false');
         globals.user = { publicKey, username: '' };
         globals.readonly = false;
+        globals.derived = await authentication.isAuthenticatedUserDerived(publicKey);
         globals.onLoginSuccess();
     }
 
