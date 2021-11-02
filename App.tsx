@@ -360,7 +360,7 @@ export default function App(): JSX.Element {
     const key = globals.user.publicKey + constants.localStorage_appearance;
     if (globals.followerFeatures || p_force) {
       const theme = await SecureStore.getItemAsync(key);
-      if (theme === CloutFeedTheme.Automatic && Platform.OS === 'ios') {
+      if (theme === CloutFeedTheme.Automatic) {
         const systemTheme = Appearance.getColorScheme() as string;
         settingsGlobals.darkMode = systemTheme === 'dark';
       } else {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Image, Dimensions, Appearance, Platform } from 'react-native';
+import { View, StyleSheet, Text, Image, Dimensions, Appearance } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { constants, eventManager, globals, settingsGlobals } from '@globals';
 import { themeStyles, updateThemeStyles } from '@styles';
@@ -44,7 +44,7 @@ export function AppearanceScreen({ navigation }: Props) {
             return;
         }
         let currentSelectedTheme = theme;
-        if (Platform.OS === 'ios' && theme === CloutFeedTheme.Automatic) {
+        if (theme === CloutFeedTheme.Automatic) {
             currentSelectedTheme = Appearance.getColorScheme() as string;
         }
         settingsGlobals.darkMode = currentSelectedTheme === 'dark';
