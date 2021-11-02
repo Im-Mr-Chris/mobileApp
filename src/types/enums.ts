@@ -49,6 +49,7 @@ export enum OptionType {
 }
 
 export enum CloutFeedTheme {
+    Automatic = 'automatic',
     Light = 'light',
     Dark = 'dark'
 }

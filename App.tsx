@@ -28,12 +28,13 @@ import CloutFeedIntroduction from '@screens/introduction/cloutFeedIntroduction.s
 import TermsConditionsScreen from '@screens/login/termsAndConditions.screen';
 import ProfileInfoModalComponent from '@components/profileInfo/profileInfoModal.component';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
-import { Alert, Platform, StatusBar, View } from 'react-native';
+import { Alert, Appearance, Platform, StatusBar, View } from 'react-native';
 import { AppState } from 'react-native';
 import { messagesService } from './src/services/messagesServices';
 import PlaceBidFormComponent from '@screens/nft/components/placeBidForm.component';
 import { UserContext } from '@globals/userContext';
 import { Post, HiddenNFTType } from '@types';
+import { CloutFeedTheme } from '@types';
 import { authenticateWithDeSoIdentity, isDerivedKeyValid, revokeDerivedKey } from './src/services/authorization/deSoAuthentication';
 
 enableScreens();
@@ -121,7 +122,7 @@ export default function App(): JSX.Element {
         }
       );
 
-      checkAuthenticatedUser().then(() => undefined).catch(() => undefined);
+      checkAuthenticatedUser().catch(() => undefined);
 
       return () => {
         unsubscribeProfileManager();
@@ -359,7 +360,12 @@ export default function App(): JSX.Element {
     const key = globals.user.publicKey + constants.localStorage_appearance;
     if (globals.followerFeatures || p_force) {
       const theme = await SecureStore.getItemAsync(key);
-      settingsGlobals.darkMode = theme === 'dark';
+      if (theme === CloutFeedTheme.Automatic && Platform.OS === 'ios') {
+        const systemTheme = Appearance.getColorScheme() as string;
+        settingsGlobals.darkMode = systemTheme === 'dark';
+      } else {
+        settingsGlobals.darkMode = theme === 'dark';
+      }
     } else {
       await SecureStore.setItemAsync(key, 'light');
     }

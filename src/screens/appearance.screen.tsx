@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Text, Image, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, Image, Dimensions, Appearance, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { constants, eventManager, globals, settingsGlobals } from '@globals';
 import { themeStyles, updateThemeStyles } from '@styles';
@@ -39,16 +39,22 @@ export function AppearanceScreen({ navigation }: Props) {
         }
     }
 
-    async function changeTheme(p_theme: string) {
-        if (selectedTheme === p_theme) {
+    async function changeTheme(theme: string) {
+        if (selectedTheme === theme) {
             return;
         }
+        let currentSelectedTheme = theme;
+        if (Platform.OS === 'ios' && theme === CloutFeedTheme.Automatic) {
+            currentSelectedTheme = Appearance.getColorScheme() as string;
+        }
+        settingsGlobals.darkMode = currentSelectedTheme === 'dark';
+        await updateTheme(theme);
+    }
 
+    async function updateTheme(theme: string) {
         const key = globals.user.publicKey + constants.localStorage_appearance;
-        settingsGlobals.darkMode = p_theme === 'dark';
-
         try {
-            await SecureStore.setItemAsync(key, p_theme);
+            await SecureStore.setItemAsync(key, theme);
             updateThemeStyles();
             globals.onLoginSuccess();
         } catch (error) {
@@ -103,6 +109,10 @@ export function AppearanceScreen({ navigation }: Props) {
                 ? <SelectListControl
                     style={[styles.selectList, themeStyles.borderColor]}
                     options={[
+                        {
+                            name: 'Automatic',
+                            value: CloutFeedTheme.Automatic
+                        },
                         {
                             name: 'Light',
                             value: CloutFeedTheme.Light

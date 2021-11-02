@@ -11,7 +11,6 @@ import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/routers';
-import { settingsGlobals } from '@globals/settingsGlobals';
 
 interface Props {
     navigation: StackNavigationProp<ParamListBase>;
@@ -24,6 +23,7 @@ interface State {
     areNFTsHidden: boolean;
     hiddenNFTType: HiddenNFTType;
     feed: FeedType;
+    appearanceLabel: string;
 }
 
 export class PreferencesScreen extends React.Component<Props, State>{
@@ -39,7 +39,8 @@ export class PreferencesScreen extends React.Component<Props, State>{
             feed: FeedType.Global,
             areNFTsHidden: false,
             isCoinPriceHidden: false,
-            hiddenNFTType: HiddenNFTType.Details
+            hiddenNFTType: HiddenNFTType.Details,
+            appearanceLabel: ''
         };
 
         this.toggleCloutCastFeed = this.toggleCloutCastFeed.bind(this);
@@ -139,9 +140,13 @@ export class PreferencesScreen extends React.Component<Props, State>{
         const coinPriceKey = globals.user.publicKey + constants.localStorage_coinPriceHidden;
         const isCoinPriceHidden = await SecureStore.getItemAsync(coinPriceKey).catch(() => undefined);
 
+        const appearanceKey = globals.user.publicKey + constants.localStorage_appearance;
+        const appearanceLabel = await SecureStore.getItemAsync(appearanceKey).catch(() => undefined) as string;
+
         if (this._isMounted) {
             this.setState(
                 {
+                    appearanceLabel: appearanceLabel,
                     isCloutCastEnabled: isCloutCastEnabledString === 'true',
                     areNFTsHidden: areNFTsHidden === 'true',
                     isCoinPriceHidden: isCoinPriceHidden === 'true',
@@ -170,7 +175,7 @@ export class PreferencesScreen extends React.Component<Props, State>{
                 activeOpacity={1}>
                 <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Appearance</Text>
                 <View style={styles.row}>
-                    <Text style={[styles.appearanceText, themeStyles.fontColorSub]}>{settingsGlobals.darkMode ? 'Dark' : 'Light'}</Text>
+                    <Text style={[styles.appearanceText, themeStyles.fontColorSub]}>{this.state.appearanceLabel}</Text>
                     <MaterialIcons name="keyboard-arrow-right" size={27} color={themeStyles.fontColorSub.color} />
                 </View>
             </TouchableOpacity>
@@ -295,6 +300,7 @@ const styles = StyleSheet.create(
             right: -8,
         },
         appearanceText: {
+            textTransform: 'capitalize',
             fontSize: 16,
         }
     }
