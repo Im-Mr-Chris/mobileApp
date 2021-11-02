@@ -686,11 +686,24 @@ function getUsersDerivedKeys(
     );
 }
 
+function checkFollowBack(publicKey: string, isFollowingPublicKey: string) {
+    const route = 'is-following-public-key';
+
+    return post(
+        route,
+        {
+            PublicKeyBase58Check: publicKey,
+            IsFollowingPublicKeyBase58Check: isFollowingPublicKey
+        }
+    );
+}
+
 function getMinFeeRateNanosPerKB() {
     return globals.derived ? 10000 : 1000;
 }
 
-export const api = {    getGlobalPosts,
+export const api = {
+    getGlobalPosts,
     getFollowingPosts,
     likePost,
     getProfile,
@@ -726,6 +739,7 @@ export const api = {    getGlobalPosts,
     getRecloutersForPost,
     getDiamondSendersForPost,
     getQuotesForPost,
+    checkFollowBack,
     authorizeDerivedKey,
     appendExtraDataToTransaction,
     getUsersDerivedKeys

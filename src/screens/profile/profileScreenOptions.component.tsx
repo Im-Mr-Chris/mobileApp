@@ -3,7 +3,7 @@ import { Alert, Linking, StyleSheet, View } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/core';
 import { Feather } from '@expo/vector-icons';
-import { api, cache, snackbar } from '@services';
+import { api, cache, checkIsFollowedBack, snackbar } from '@services';
 import { ChangeFollowersEvent, EventType, User } from '@types';
 import { constants, eventManager, globals } from '@globals';
 import { themeStyles } from '@styles';
@@ -22,22 +22,37 @@ export function ProfileScreenOptionsComponent(
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
     const [isFollowed, setIsFollowed] = useState<boolean | undefined>(undefined);
+    const [isFollowButtonLoading, setIsFollowButtonLoading] = useState(true);
+    const [isFollowingBack, setIsFollowingBack] = useState<boolean>(false);
     const [followButtonColor, setFollowButtonColor] = useState<string>('black');
 
     const isMounted = useRef<boolean>(true);
 
     useEffect(
         () => {
-            cache.user.getData().then(
-                response => checkIsFollowed(response)
-            ).catch();
-
+            init();
             return () => {
                 isMounted.current = false;
             };
         },
         []
     );
+
+    async function init(): Promise<void> {
+        try {
+            const response = await Promise.all(
+                [
+                    cache.user.getData(),
+                    checkIsFollowedBack(publicKey)
+                ]
+            );
+            if (isMounted.current) {
+                checkIsFollowed(response[0]);
+                setIsFollowingBack(response[1]);
+                setIsFollowButtonLoading(false);
+            }
+        } catch { }
+    }
 
     function checkIsFollowed(user: User): void {
         const followedByUserPublicKeys = user.PublicKeysBase58CheckFollowedByUser;
@@ -160,6 +175,8 @@ export function ProfileScreenOptionsComponent(
         );
     }
 
+    const buttonTitle = isFollowed ? 'Unfollow' : isFollowingBack ? 'Follow back' : 'Follow';
+
     return <View style={styles.container}>
         <View style={styles.leftContainer}>
             <NotificationSubscriptionComponent publicKey={publicKey} />
@@ -169,8 +186,9 @@ export function ProfileScreenOptionsComponent(
         </View>
         <View style={styles.rightContainer}>
             <CloutFeedButton
+                isLoading={isFollowButtonLoading}
                 disabled={followButtonColor !== 'black'}
-                title={isFollowed ? 'Unfollow' : 'Follow'}
+                title={buttonTitle}
                 onPress={onFollowButtonClick}
                 styles={styles.followButton}
             />
@@ -198,7 +216,8 @@ const styles = StyleSheet.create(
         },
         followButton: {
             marginRight: 10,
-            width: 90
+            width: 105,
+            height: 30,
         },
         leftContainer: {
             flexDirection: 'row',

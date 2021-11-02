@@ -1,4 +1,6 @@
+import { globals } from '@globals/globals';
 import { Profile } from '@types';
+import { api } from './api/api';
 
 export function calculateDurationUntilNow(p_timeStampNanoSeconds: number): string {
     const milliseconds = p_timeStampNanoSeconds / 1000000;
@@ -74,4 +76,9 @@ export function generatePostHashHex(): string {
         result += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     return result;
+}
+
+export async function checkIsFollowedBack(publicKey: string): Promise<boolean> {
+    const response = await api.checkFollowBack(publicKey, globals.user.publicKey).catch(() => { });
+    return response.IsFollowing;
 }

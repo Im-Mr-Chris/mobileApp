@@ -5,7 +5,7 @@ import { eventManager } from '@globals/injector';
 import { ProfileCard } from '@screens/profile/profileCard.component';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ParamListBase } from '@react-navigation/native';
-import { api, cache, cloutFeedApi } from '@services';
+import { api, cache, cloutFeedApi, checkIsFollowedBack } from '@services';
 import { themeStyles } from '@styles/globalColors';
 import { globals } from '@globals/globals';
 import { constants } from '@globals/constants';
@@ -29,6 +29,7 @@ interface State {
     subscribedNotifications: OptionType[],
     isOptionLoading: boolean;
     pressedOption: string;
+    isFollowingBack: boolean;
 }
 
 interface Option {
@@ -55,7 +56,8 @@ export default class ProfileInfoModalComponent extends React.Component<Props, St
             followButtonColor: 'black',
             subscribedNotifications: [],
             isOptionLoading: true,
-            pressedOption: ''
+            pressedOption: '',
+            isFollowingBack: false
         };
 
         const imageUri = api.getSingleProfileImage(this.props.profile?.PublicKeyBase58Check);
@@ -92,9 +94,18 @@ export default class ProfileInfoModalComponent extends React.Component<Props, St
 
     private async init(imageUri: string): Promise<void> {
         try {
-            await Image.prefetch(imageUri);
+            const responses = await Promise.all(
+                [
+                    Image.prefetch(imageUri),
+                    checkIsFollowedBack(this.props.profile.PublicKeyBase58Check),
+                    cache.user.getData()
+                ]
+            );
             this.props.profile.ProfilePic = imageUri;
-            const response = await cache.user.getData();
+            if (this._isMounted) {
+                this.setState({ isFollowingBack: responses[1] });
+            }
+            const response = responses[2];
             this.checkIsFollowed(response);
         } catch {
             this.props.profile.ProfilePic = 'https://i.imgur.com/vZ2mB1W.png';
@@ -338,13 +349,13 @@ export default class ProfileInfoModalComponent extends React.Component<Props, St
 
     render(): JSX.Element {
 
-        const followText = this.state.isFollowed ? 'Unfollow' : 'Follow';
+        const followText = this.state.isFollowed ? 'Unfollow User' : this.state.isFollowingBack ? 'Follow Back' : 'Follow User';
         const notificationText = this.state.subscribedNotifications.includes(OptionType.Post) ? 'off' : 'on';
         const FRText = this.state.subscribedNotifications.includes(OptionType.FounderReward) ? 'off' : 'on';
 
         const options: Option[] = [
             {
-                title: `${followText} User`,
+                title: `${followText}`,
                 onPress: this.onFollowButtonClick.bind(this),
                 subscription: OptionType.Follow,
                 hasLoader: true

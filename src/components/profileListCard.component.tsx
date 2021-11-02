@@ -4,7 +4,7 @@ import { Profile } from '../types';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { themeStyles } from '@styles';
 import { constants, globals } from '@globals';
-import { api, cache } from '@services';
+import { api, cache, checkIsFollowedBack } from '@services';
 import { signing } from '@services/authorization/signing';
 import CloutFeedButton from '@components/cloutfeedButton.component';
 import ProfileInfoCardComponent from '@components/profileInfo/profileInfoCard.component';
@@ -19,14 +19,25 @@ export function ProfileListCardComponent({ profile, isFollowing, handleSearchHis
     const [working, setWorking] = useState(false);
     const [following, setFollowing] = useState(false);
     const [showFollowButton, setShowFollowButton] = useState(false);
+    const [isFollowButtonLoading, setIsFollowButtonLoading] = useState(true);
+    const [isFollowingBack, setIsFollowingBack] = useState<boolean>(false);
 
     const isMounted = useRef<boolean>(true);
 
     useEffect(
         () => {
+
             if (isMounted.current) {
                 setShowFollowButton(profile.PublicKeyBase58Check !== globals.user.publicKey);
                 setFollowing(isFollowing);
+                checkIsFollowedBack(profile?.PublicKeyBase58Check).then(
+                    (isFollowing: boolean) => {
+                        if (isMounted.current) {
+                            setIsFollowingBack(isFollowing);
+                            setIsFollowButtonLoading(false);
+                        }
+                    }
+                ).catch(() => { });
             }
 
             return () => {
@@ -52,7 +63,6 @@ export function ProfileListCardComponent({ profile, isFollowing, handleSearchHis
                 if (isMounted.current) {
                     setFollowing((p_previous) => !p_previous);
                 }
-
                 if (following) {
                     cache.removeFollower(profile.PublicKeyBase58Check);
                 } else {
@@ -92,6 +102,8 @@ export function ProfileListCardComponent({ profile, isFollowing, handleSearchHis
         }
     }
 
+    const buttonTitle = following ? 'Unfollow' : isFollowingBack ? 'Follow back' : 'Follow';
+
     return <TouchableOpacity onPress={goToProfile} activeOpacity={1}>
         <View style={[styles.profileListCard, themeStyles.containerColorMain]}>
             <ProfileInfoCardComponent
@@ -103,9 +115,10 @@ export function ProfileListCardComponent({ profile, isFollowing, handleSearchHis
                 showFollowButton && !globals.readonly ?
                     <View style={styles.followButtonContainer}>
                         <CloutFeedButton
+                            isLoading={isFollowButtonLoading}
                             disabled={working}
                             styles={styles.followBtn}
-                            title={following ? 'Unfollow' : 'Follow'}
+                            title={buttonTitle}
                             onPress={onFollowButtonClick}
                         />
                     </View>
@@ -125,7 +138,7 @@ const styles = StyleSheet.create(
             alignItems: 'center'
         },
         followBtn: {
-            width: 90
+            width: 105
         },
         followButtonContainer: {
             marginLeft: 'auto',
