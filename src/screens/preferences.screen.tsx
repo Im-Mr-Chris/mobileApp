@@ -6,7 +6,7 @@ import * as SecureStore from 'expo-secure-store';
 import { constants } from '@globals/constants';
 import { globals } from '@globals/globals';
 import { eventManager } from '@globals/injector';
-import { EventType, FeedType, HiddenNFTType, ToggleCloutCastFeedEvent, ToggleHideCoinPriceEvent, ToggleHideNFTsEvent } from '@types';
+import { EventType, FeedType, HiddenNFTType, ToggleCloutCastFeedEvent, ToggleHideCoinPriceEvent } from '@types';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { MaterialIcons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,6 +20,7 @@ interface State {
     isLoading: boolean;
     isCloutCastEnabled: boolean;
     isCoinPriceHidden: boolean;
+    isSignatureEnabled: boolean;
     areNFTsHidden: boolean;
     hiddenNFTType: HiddenNFTType;
     feed: FeedType;
@@ -38,6 +39,7 @@ export class PreferencesScreen extends React.Component<Props, State>{
             isCloutCastEnabled: true,
             feed: FeedType.Global,
             areNFTsHidden: false,
+            isSignatureEnabled: true,
             isCoinPriceHidden: false,
             hiddenNFTType: HiddenNFTType.Details,
             appearanceLabel: ''
@@ -46,6 +48,8 @@ export class PreferencesScreen extends React.Component<Props, State>{
         this.toggleCloutCastFeed = this.toggleCloutCastFeed.bind(this);
         this.onFeedTypeChange = this.onFeedTypeChange.bind(this);
         this.toggleCoinPrice = this.toggleCoinPrice.bind(this);
+        this.toggleSignature = this.toggleSignature.bind(this);
+        this.goToNFTSettings = this.goToNFTSettings.bind(this);
         this.goToAppearance = this.goToAppearance.bind(this);
 
         this.initScreen();
@@ -69,31 +73,6 @@ export class PreferencesScreen extends React.Component<Props, State>{
         SecureStore.setItemAsync(key, String(newValue)).catch(() => undefined);
     }
 
-    private toggleHideNFTOption(): void {
-        const newValue = !this.state.areNFTsHidden;
-        this.setState({ areNFTsHidden: newValue });
-
-        let type = this.state.hiddenNFTType;
-        if (this.state.areNFTsHidden) {
-            type = HiddenNFTType.None;
-        } else {
-            type = HiddenNFTType.Details;
-            this.setState({ hiddenNFTType: type });
-        }
-        globals.areNFTsHidden = newValue;
-        globals.hiddenNFTType = type;
-
-        const event: ToggleHideNFTsEvent = { hidden: newValue, type };
-        eventManager.dispatchEvent(EventType.ToggleHideNFTs, event);
-
-        const typeKey = globals.user.publicKey + constants.localStorage_hiddenNFTType;
-        SecureStore.setItemAsync(typeKey, String(type)).catch(() => undefined);
-
-        const key = globals.user.publicKey + constants.localStorage_nftsHidden;
-        SecureStore.setItemAsync(key, String(newValue)).catch(() => undefined);
-
-    }
-
     private async toggleCoinPrice(): Promise<void> {
         const newValue = !this.state.isCoinPriceHidden;
         this.setState({ isCoinPriceHidden: newValue });
@@ -105,6 +84,15 @@ export class PreferencesScreen extends React.Component<Props, State>{
         await SecureStore.setItemAsync(key, String(newValue)).catch(() => undefined);
     }
 
+    private async toggleSignature(): Promise<void> {
+        const newValue = !this.state.isSignatureEnabled;
+        this.setState({ isSignatureEnabled: newValue });
+        globals.isSignatureEnabled = newValue;
+
+        const key = globals.user.publicKey + constants.localStorage_signatureEnabled;
+        await SecureStore.setItemAsync(key, String(newValue)).catch(() => undefined);
+    }
+
     private onFeedTypeChange(type: FeedType): void {
         this.setState({ feed: type });
 
@@ -112,21 +100,12 @@ export class PreferencesScreen extends React.Component<Props, State>{
         SecureStore.setItemAsync(key, String(type)).catch(() => undefined);
     }
 
-    private onHiddenNFTTypeChange(type: HiddenNFTType): void {
-        this.setState({ hiddenNFTType: type });
-        const newValue = this.state.areNFTsHidden;
-
-        globals.hiddenNFTType = type;
-        const event: ToggleHideNFTsEvent = { hidden: newValue, type };
-        eventManager.dispatchEvent(EventType.ToggleHideNFTs, event);
-
-        const key = globals.user.publicKey + constants.localStorage_hiddenNFTType;
-        SecureStore.setItemAsync(key, String(type)).catch(() => undefined);
-    }
-
     private async initScreen(): Promise<void> {
         const feedKey = globals.user.publicKey + constants.localStorage_defaultFeed;
         const feed = await SecureStore.getItemAsync(feedKey).catch(() => undefined) as FeedType;
+
+        const signatureKey = globals.user.publicKey + constants.localStorage_signatureEnabled;
+        const isSignatureEnabled = await SecureStore.getItemAsync(signatureKey).catch(() => undefined);
 
         const nftTypeKey = globals.user.publicKey + constants.localStorage_hiddenNFTType;
         const hiddenNFTType = await SecureStore.getItemAsync(nftTypeKey).catch(() => undefined) as HiddenNFTType;
@@ -148,6 +127,7 @@ export class PreferencesScreen extends React.Component<Props, State>{
                 {
                     appearanceLabel: appearanceLabel,
                     isCloutCastEnabled: isCloutCastEnabledString === 'true',
+                    isSignatureEnabled: isSignatureEnabled === 'true',
                     areNFTsHidden: areNFTsHidden === 'true',
                     isCoinPriceHidden: isCoinPriceHidden === 'true',
                     feed: feed ? feed : FeedType.Global,
@@ -160,6 +140,10 @@ export class PreferencesScreen extends React.Component<Props, State>{
 
     private goToAppearance(): void {
         this.props.navigation.push('Appearance');
+    }
+
+    private goToNFTSettings(): void {
+        this.props.navigation.push('NFTSettings');
     }
 
     render(): JSX.Element {
@@ -181,14 +165,37 @@ export class PreferencesScreen extends React.Component<Props, State>{
             </TouchableOpacity>
             {
                 globals.readonly ? undefined :
+                    <TouchableOpacity
+                        style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}
+                        onPress={this.goToNFTSettings}
+                        activeOpacity={1}>
+                        <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Configure NFTs</Text>
+                        <MaterialIcons style={{ right: -8 }} name="keyboard-arrow-right" size={27} color={themeStyles.fontColorSub.color} />
+                    </TouchableOpacity>
+            }
+            {
+                globals.readonly ? undefined :
                     <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
                         <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>CloutCast Feed</Text>
                         <Switch
                             trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
                             thumbColor={'white'}
                             ios_backgroundColor={themeStyles.switchColor.color}
-                            onValueChange={() => this.toggleCloutCastFeed()}
+                            onValueChange={this.toggleCloutCastFeed}
                             value={this.state.isCloutCastEnabled}
+                        />
+                    </View>
+            }
+            {
+                globals.readonly ? undefined :
+                    <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
+                        <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>CloutFeed Signature</Text>
+                        <Switch
+                            trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
+                            thumbColor={'white'}
+                            ios_backgroundColor={themeStyles.switchColor.color}
+                            onValueChange={this.toggleSignature}
+                            value={this.state.isSignatureEnabled}
                         />
                     </View>
             }
@@ -204,38 +211,6 @@ export class PreferencesScreen extends React.Component<Props, State>{
                             value={this.state.isCoinPriceHidden}
                         />
                     </View>
-            }
-            {
-                globals.readonly ? undefined :
-                    <View style={[styles.cloutCastFeedSettingsContainer, themeStyles.borderColor]}>
-                        <Text style={[styles.cloutCastFeedSettingsText, themeStyles.fontColorMain]}>Hide NFTs</Text>
-                        <Switch
-                            trackColor={{ false: themeStyles.switchColor.color, true: '#007ef5' }}
-                            thumbColor={'white'}
-                            ios_backgroundColor={themeStyles.switchColor.color}
-                            onValueChange={() => this.toggleHideNFTOption()}
-                            value={this.state.areNFTsHidden}
-                        />
-                    </View>
-            }
-            {
-                this.state.areNFTsHidden &&
-                <SelectListControl
-                    style={[styles.selectList, themeStyles.borderColor]}
-                    options={[
-                        {
-                            name: 'Only hide NFT details',
-                            value: HiddenNFTType.Details
-                        },
-                        {
-
-                            name: 'Hide posts completely',
-                            value: HiddenNFTType.Posts
-                        },
-                    ]}
-                    value={this.state.hiddenNFTType}
-                    onValueChange={(value: string | string[]) => this.onHiddenNFTTypeChange(value as HiddenNFTType)}
-                />
             }
             <View>
                 <Text style={[styles.defaultFeedTitle, themeStyles.fontColorMain]}>Default Feed</Text>

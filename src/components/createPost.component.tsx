@@ -102,7 +102,8 @@ export function CreatePostComponent(
             }
 
             if (newPost) {
-                onMentionChange('\n\nPosted via @[cloutfeed](undefined)');
+                const initialText = globals.isSignatureEnabled ? '\n\nPosted via @[cloutfeed](undefined)' : '';
+                onMentionChange(initialText);
             }
             const unsubscribeRefreshDraftPosts = navigation.addListener('focus', () => { refreshDraftPosts(); });
             return () => {

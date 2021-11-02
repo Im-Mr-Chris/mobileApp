@@ -17,6 +17,7 @@ import NotificationsSettingsScreen from '@screens/settings/notificationsSettings
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { PreferencesScreen } from '@screens/preferences.screen';
 import { SharedStackScreens } from './sharedStackScreens';
+import NFTSettingsScreen from '@screens/settings/nftSettings.screen';
 
 const ProfileStack = createStackNavigator();
 
@@ -102,6 +103,14 @@ export default function ProfileStackScreen() {
             }}
             name="Appearance"
             component={AppearanceScreen}
+        />
+        <ProfileStack.Screen
+            options={{
+                headerTitle: 'NFT Settings',
+                headerBackTitle: ' ',
+            }}
+            name="NFTSettings"
+            component={NFTSettingsScreen}
         />
         <ProfileStack.Screen
             options={{

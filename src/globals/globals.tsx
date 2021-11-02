@@ -36,5 +36,6 @@ export const globals = {
     checkedInitialRoute: false,
     areNFTsHidden: false,
     hiddenNFTType: HiddenNFTType.None,
-    isCoinPriceHidden: false
+    isCoinPriceHidden: false,
+    isSignatureEnabled: true
 };

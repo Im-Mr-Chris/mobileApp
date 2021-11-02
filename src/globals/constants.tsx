@@ -18,6 +18,7 @@ export const constants = {
     localStorage_searchHistoryProfiles: '_searchHistoryProfiles',
     localStorage_searchHistoryCloutTags: '_searchHistoryCloutTags',
     localStorage_coinPriceHidden: '_coinPriceHidden',
+    localStorage_signatureEnabled: '_signatureEnabled',
     localStorage_nftsHidden: '_nftsHidden',
     localStorage_cloutFeedHapticsEnabled: '_cloutFeedHapticsEnabled',
     localStorage_cloutFeedIdentity: 'cloutfeedIdentity',
