@@ -201,9 +201,6 @@ export function CreatePostScreen({ navigation, route }: any) {
             }
             cache.user.getData().then(
                 p_user => {
-                    if (isDraftPost && editPost) {
-                        setVideoLink(editedPost.PostExtraData.EmbedVideoURL);
-                    }
                     const profile = p_user.ProfileEntryResponse;
                     if (editPost) {
                         if (editedPost.RepostedPostEntryResponse) {
@@ -212,6 +209,9 @@ export function CreatePostScreen({ navigation, route }: any) {
                         setPostText(editedPost.Body);
                         if (editedPost.ImageURLs?.length > 0) {
                             setImagesBase64(editedPost.ImageURLs);
+                        }
+                        if (editedPost.PostExtraData?.EmbedVideoURL) {
+                            setVideoLink(editedPost.PostExtraData?.EmbedVideoURL);
                         }
                     } else {
                         setRecloutedPostEntry(recloutedPost);

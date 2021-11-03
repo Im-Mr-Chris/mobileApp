@@ -52,6 +52,7 @@ export function CreatePostComponent(
     const postRef = useRef<Post>({} as Post);
     const imageUrlsRef = useRef<string[]>([]);
     const internalVideoLinkRef = useRef<string>(videoLink);
+    const postTextRef = useRef<string>(postText);
 
     const oldDraftPostsRef = useRef<Post[]>([]);
 
@@ -217,7 +218,7 @@ export function CreatePostComponent(
 
     function shouldSaveDraft(): boolean {
         const initialText = '\n\nPosted via @cloutfeed';
-        return (initialText !== postRef.current.Body && postRef.current.Body.trim().length > 0) ||
+        return (initialText !== postText && postText.trim().length > 0) ||
             imageUrls?.length > 0 ||
             internalVideoLink?.length > 0;
     }
@@ -225,21 +226,18 @@ export function CreatePostComponent(
     function clearPost(): void {
         setImageUrls([]);
         imageUrlsRef.current = [];
-        onMentionChange('');
+        onMentionChange('', true);
         setSelectedImageIndex(0);
         setInsertVideo(false);
         setInternalVideoLink('');
         setTextSelection(newPost ? { start: 0, end: 0 } : undefined);
     }
 
-    async function saveDraftPost(): Promise<void> {
-        try {
-            const key = `${globals.user.publicKey}_${constants.localStorage_draftPost}`;
-            await AsyncStorage.setItem(key, JSON.stringify([postRef.current, ...oldDraftPostsRef.current]));
-            snackbar.showSnackBar({ text: 'Post saved as a draft' });
-            clearPost();
-            setTimeout(() => navigation.pop(), 500);
-        } catch { }
+    function saveDraftPost(): void {
+        onSingleDraftPostChange();
+        snackbar.showSnackBar({ text: 'Post saved as a draft' });
+        clearPost();
+        setTimeout(() => navigation.pop(), 500);
     }
 
     async function updateDraftPost(): Promise<void> {
@@ -437,7 +435,7 @@ export function CreatePostComponent(
     }
 
     postRef.current = {
-        Body: postText,
+        Body: postTextRef.current,
         OwnerPublicKeyBase58Check: profile.PublicKeyBase58Check,
         CommentCount: 0,
         Comments: [],
@@ -483,9 +481,12 @@ export function CreatePostComponent(
         BidAmountNanos: 0
     };
 
-    function onMentionChange(value: string): void {
+    function onMentionChange(value: string, clear = false): void {
         const replaceMention = replaceMentionValues(value, ({ name, trigger }) => `${trigger}${name}`);
         setPostText(replaceMention);
+        if (!clear) {
+            postTextRef.current = replaceMention;
+        }
         setInternalPostText(value);
         inputRef?.focus();
     }
