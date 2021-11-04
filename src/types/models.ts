@@ -168,6 +168,7 @@ export interface ContactWithMessages {
     PublicKeyBase58Check: string;
     CreatorCoinHoldingAmount?: number;
     UnreadMessages?: boolean;
+    LastDecryptedMessage?: string;
 }
 
 export interface Message {

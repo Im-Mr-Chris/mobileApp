@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { settingsGlobals } from '@globals';
-import { getMessageText } from '@services';
 import { Message } from '@types';
 import { TextWithLinks } from './textWithLinks.component';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
@@ -10,47 +9,25 @@ import { StackNavigationProp } from '@react-navigation/stack';
 export function MessageComponent(
     { message }: { message: Message }
 ): JSX.Element {
+
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
-    const [messageText, setMessageText] = useState<string>('');
-    let mount = true;
-
-    useEffect(
-        () => {
-
-            if (message) {
-                getMessageText(message).then(
-                    p_text => {
-                        if (mount) {
-                            setMessageText(p_text);
-                        }
-                    }
-                ).catch(() => undefined);
-            }
-
-            return () => {
-                mount = false;
-            };
-        },
-        []
-    );
-    return <View style={[
-        styles.messageContainer,
-        { backgroundColor: settingsGlobals.darkMode ? '#333333' : '#4d4d4d' },
-        message.IsSender ? styles.sentMessage : styles.receivedMessage,
-        message.LastOfGroup ? styles.lastOfGroup : {}
-    ]}
+    return <View style={
+        [
+            styles.messageContainer,
+            { backgroundColor: settingsGlobals.darkMode ? '#333333' : '#4d4d4d' },
+            message.IsSender ? styles.sentMessage : styles.receivedMessage,
+            message.LastOfGroup ? styles.lastOfGroup : {}
+        ]
+    }
     >
-        <TextWithLinks style={[styles.messageText]} navigation={navigation} text={messageText}></TextWithLinks>
+        <TextWithLinks style={[styles.messageText]} navigation={navigation} text={message.DecryptedText as string} />
     </View>;
 }
 
 const styles = StyleSheet.create(
     {
         messageContainer: {
-            paddingTop: 8,
-            paddingBottom: 8,
-            paddingRight: 8,
-            paddingLeft: 8,
+            padding: 8,
             marginTop: 1,
             marginBottom: 2,
             borderRadius: 10

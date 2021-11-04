@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { ContactWithMessages } from '@types';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { globals } from '@globals';
-import { api, calculateDurationUntilNow, getMessageText } from '@services';
+import { api, calculateDurationUntilNow } from '@services';
 import { themeStyles } from '@styles';
 import { signing } from '@services/authorization/signing';
 import MessageInfoCardComponent from '@components/profileInfo/messageInfoCard.component';
@@ -12,8 +12,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 export function ContactMessagesListCardComponent(
     { contactWithMessages }: { contactWithMessages: ContactWithMessages }
 ): JSX.Element {
-    const [lastMessageText, setLastMessageText] = useState<string>('');
-    const [duration, setDuration] = useState<string>('');
     const [showCreatorCoinHolding, setShowCreatorCoinHolding] = useState<boolean>(false);
     const [unreadMessages, setUnreadMessages] = useState<boolean>(false);
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
@@ -21,29 +19,10 @@ export function ContactMessagesListCardComponent(
 
     useEffect(
         () => {
-
             setShowCreatorCoinHolding(
                 (contactWithMessages.CreatorCoinHoldingAmount as number) > 0 && globals.investorFeatures
             );
             setUnreadMessages(contactWithMessages.UnreadMessages as boolean);
-
-            const lastMessage = contactWithMessages.Messages?.length > 0 ?
-                contactWithMessages.Messages[contactWithMessages.Messages.length - 1] : undefined;
-
-            if (lastMessage) {
-                getMessageText(lastMessage).then(
-                    p_text => {
-                        if (isMounted) {
-                            setLastMessageText(p_text);
-                        }
-                    }
-                ).catch(() => { undefined; });
-
-                setDuration(calculateDurationUntilNow(lastMessage.TstampNanos));
-            } else {
-                setLastMessageText('');
-            }
-
             return () => {
                 isMounted.current = false;
             };
@@ -74,24 +53,23 @@ export function ContactMessagesListCardComponent(
             }
         );
     }
-
+    let duration = '';
+    const lastMessage = contactWithMessages.Messages?.length > 0 ?
+        contactWithMessages.Messages[contactWithMessages.Messages.length - 1] : undefined;
+    if (lastMessage) {
+        duration = calculateDurationUntilNow(lastMessage?.TstampNanos);
+    }
     return <TouchableOpacity style={[styles.touchableContainer, themeStyles.containerColorMain, themeStyles.borderColor]} activeOpacity={0.8} onPress={goToChat}>
         <View style={styles.container}>
             <MessageInfoCardComponent
                 navigation={navigation}
                 profile={contactWithMessages.ProfileEntryResponse}
-                lastMessage={lastMessageText}
+                lastMessage={contactWithMessages.LastDecryptedMessage}
                 duration={duration}
                 showCreatorCoinHolding={showCreatorCoinHolding}
                 isLarge={false}
             />
-            {
-                unreadMessages ?
-                    < View style={[styles.unreadMessagesCountContainer]}>
-                    </View>
-                    :
-                    undefined
-            }
+            {unreadMessages ? <View style={[styles.unreadMessagesCountContainer]} /> : undefined}
         </View>
     </TouchableOpacity >;
 }

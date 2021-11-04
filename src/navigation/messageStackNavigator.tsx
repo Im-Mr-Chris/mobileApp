@@ -3,7 +3,6 @@ import React from 'react';
 import { StyleSheet, Platform } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import { ChatScreen } from '@screens/chatScreen';
 import { MessageTopHoldersOptionsScreen } from '@screens/messageTopHolders/messageTopHoldersOptions';
 import { MessageTopHoldersInputScreen } from '@screens/messageTopHolders/messageTopHoldersInput';
 import { ChatHeaderComponent } from '@components/chatHeader.component';
@@ -15,6 +14,7 @@ import { stackConfig } from './stackNavigationConfig';
 import CloutFeedButton from '@components/cloutfeedButton.component';
 import { EventType } from '@types';
 import { SharedStackScreens } from './sharedStackScreens';
+import { ChatScreen } from '@screens/chat/chat.screen';
 
 const MessageStack = createStackNavigator();
 

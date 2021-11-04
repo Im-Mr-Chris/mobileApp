@@ -1,13 +1,13 @@
 import React from 'react';
 import { eventManager } from '@globals/injector';
 import { themeStyles } from '@styles/globalColors';
-import { View, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Text } from 'react-native';
-import { ContactWithMessages, EventType, MessageFilter, MessageSort } from '@types';
+import { View, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Text, SafeAreaView } from 'react-native';
+import { ContactWithMessages, EventType, Message, MessageFilter, MessageSort } from '@types';
 import { MessageSettingsComponent } from './components/messageSettings';
 import * as SecureStore from 'expo-secure-store';
 import { constants } from '@globals/constants';
 import { globals } from '@globals/globals';
-import { api } from '@services';
+import { api, getMessageText } from '@services';
 import { getAnonymousProfile } from '@services';
 import { ContactMessagesListCardComponent } from '@screens/messages/components/contactMessagesListCard.component';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
@@ -90,8 +90,8 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
         }
 
         messagesService.getMessagesCallback(messageFilter, 25, messageSort, '').then(
-            response => {
-                const contacts = this.processData(response);
+            async response => {
+                const contacts = await this.processData(response);
                 if (this._isMounted) {
                     this.setState(
                         {
@@ -117,9 +117,8 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
         const lastPublicKey = this.state.contacts[this.state.contacts.length - 1].PublicKeyBase58Check;
 
         messagesService.getMessagesCallback(messageFilter, 25, messageSort, lastPublicKey).then(
-            response => {
-                const contacts = this.processData(response);
-
+            async response => {
+                const contacts = await this.processData(response);
                 if (this._isMounted) {
                     this.setState(
                         {
@@ -133,7 +132,13 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
         );
     }
 
-    private processData(response: any): ContactWithMessages[] {
+    private async handleDecryptLastMessage(message: Message): Promise<string | undefined> {
+        try {
+            return await getMessageText(message);
+        } catch { }
+    }
+
+    private async processData(response: any): Promise<ContactWithMessages[]> {
         const unreadStateByContact = response?.UnreadStateByContact ? response.UnreadStateByContact : {};
         const contactsWithMessages: ContactWithMessages[] = response?.OrderedContactsWithMessages ? response.OrderedContactsWithMessages : [];
 
@@ -143,10 +148,14 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
             } else {
                 contactWithMessages.ProfileEntryResponse.ProfilePic = api.getSingleProfileImage(contactWithMessages.PublicKeyBase58Check);
             }
+            try {
 
-            contactWithMessages.UnreadMessages = unreadStateByContact[contactWithMessages.PublicKeyBase58Check];
+                const lastMessage = contactWithMessages.Messages[contactWithMessages.Messages.length - 1];
+                const response = await this.handleDecryptLastMessage(lastMessage);
+                contactWithMessages.LastDecryptedMessage = response;
+                contactWithMessages.UnreadMessages = unreadStateByContact[contactWithMessages.PublicKeyBase58Check];
+            } catch { }
         }
-
         return contactsWithMessages;
     }
 
@@ -180,6 +189,16 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
     }
 
     render(): JSX.Element {
+
+        const renderRefresh = <RefreshControl
+            tintColor={themeStyles.fontColorMain.color}
+            titleColor={themeStyles.fontColorMain.color}
+            refreshing={this.state.refreshing}
+            onRefresh={() => this.loadMessages(this.state.messagesFilter, this.state.messagesSort)}
+        />;
+        const keyExtractor = (item: ContactWithMessages, index: number): string => item.PublicKeyBase58Check + index.toString();
+        const renderItem = ({ item }: { item: ContactWithMessages }): JSX.Element => <ContactMessagesListCardComponent contactWithMessages={item} />;
+        const renderFooter = this.state.isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : <></>;
         if (globals.readonly) {
             return <View style={[styles.infoMessageContainer, styles.container, themeStyles.containerColorSub]}>
                 <Text style={[styles.infoText, themeStyles.fontColorMain]}>Messages are not available in the read-only mode.</Text>
@@ -192,29 +211,28 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
             </View>;
         }
 
-        return <View style={[styles.container, themeStyles.containerColorMain]}>
+        return <SafeAreaView style={[styles.container, themeStyles.containerColorMain]}>
             {
                 this.state.isLoading ?
                     <CloutFeedLoader />
                     :
-                    <View style={[styles.container, themeStyles.containerColorMain]}>
-                        <FlatList
-                            data={this.state.contacts}
-                            keyExtractor={(item, index) => item.PublicKeyBase58Check + index.toString()}
-                            renderItem={({ item }) => <ContactMessagesListCardComponent contactWithMessages={item}></ContactMessagesListCardComponent>}
-                            refreshControl={<RefreshControl
-                                tintColor={themeStyles.fontColorMain.color}
-                                titleColor={themeStyles.fontColorMain.color}
-                                refreshing={this.state.refreshing}
-                                onRefresh={() => this.loadMessages(this.state.messagesFilter, this.state.messagesSort)}
-
-                            />}
-                            onEndReached={() => this.loadMoreMessages(this.state.messagesFilter, this.state.messagesSort)}
-                            ListFooterComponent={() => this.state.isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color}></ActivityIndicator> : <View></View>}
-                        />
-                    </View>
+                    globals.readonly ?
+                        <View style={[styles.readOnlyText, styles.container, themeStyles.containerColorSub]}>
+                            <Text style={themeStyles.fontColorMain}>Messages are not available in the read-only mode.</Text>
+                        </View>
+                        :
+                        <View style={[styles.container, themeStyles.containerColorMain]}>
+                            <FlatList
+                                style={styles.flatListStyle}
+                                data={this.state.contacts}
+                                keyExtractor={keyExtractor}
+                                renderItem={renderItem}
+                                refreshControl={renderRefresh}
+                                onEndReached={() => this.loadMoreMessages(this.state.messagesFilter, this.state.messagesSort)}
+                                ListFooterComponent={renderFooter}
+                            />
+                        </View>
             }
-
             {
                 this.state.isFilterShown &&
                 <MessageSettingsComponent
@@ -224,7 +242,7 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
                     onSettingsChange={(filter: MessageFilter[], sort: MessageSort) => this.onMessageSettingChange(filter, sort)}
                 />
             }
-        </View>;
+        </SafeAreaView>;
     }
 }
 
@@ -234,6 +252,9 @@ const styles = StyleSheet.create(
             flex: 1,
             width: '100%'
         },
+        flatListStyle: {
+            marginBottom: 20
+        },
         infoMessageContainer: {
             alignItems: 'center',
             justifyContent: 'center',
@@ -241,6 +262,10 @@ const styles = StyleSheet.create(
         },
         infoText: {
             textAlign: 'center'
+        },
+        readOnlyText: {
+            alignItems: 'center',
+            justifyContent: 'center'
         }
     }
 );

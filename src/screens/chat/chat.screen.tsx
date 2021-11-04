@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Text, SectionList, Dimensions, KeyboardAvoidingView, Platform, Keyboard, TextInput, KeyboardEvent } from 'react-native';
+import { View, StyleSheet, Text, SectionList, Dimensions, KeyboardAvoidingView, Platform, Keyboard, TextInput, KeyboardEvent, ActivityIndicator } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { ContactWithMessages, Message } from '@types';
 import { MessageComponent } from '@components/messageComponent';
 import { globals, settingsGlobals } from '@globals';
-import { api } from '@services';
+import { api, getMessageText } from '@services';
 import { themeStyles } from '@styles';
 import { signing } from '@services/authorization/signing';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
@@ -30,14 +30,19 @@ interface Props {
 export function ChatScreen({ route }: Props) {
 
     const [isLoading, setLoading] = useState<boolean>(true);
+    const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+    const [noMoreMessages, setNoMoreMessages] = useState(false);
+    const [contactWithMessagesState, setContactWithMessagesState] = useState<ContactWithMessages>({} as ContactWithMessages);
     const [sections, setSections] = useState<Section[]>([]);
     const [textInputHeight, setTextInputHeight] = useState<number>(35);
     const [messageText, setMessageText] = useState<string>('');
     const [paddingTop, setPaddingTop] = useState<number>(0);
+    const [isKeyboardAvoidingViewEnabled, setIsKeyboardAvoidingViewEnabled] = useState<boolean>(true);
 
     const sectionListRef: React.RefObject<SectionList> = useRef(null);
-
+    const lastVisitedIndex = useRef<number>(15);
     const isMounted = useRef<boolean>(true);
+    const contactWithMessagesRef = useRef<ContactWithMessages>({} as ContactWithMessages);
 
     useEffect(
         () => {
@@ -50,7 +55,7 @@ export function ChatScreen({ route }: Props) {
                     false,
                     false,
                     false,
-                    1000,
+                    25,
                     'time',
                     ''
                 ).then(
@@ -59,29 +64,21 @@ export function ChatScreen({ route }: Props) {
                         const newContactWithMessages = messages.find(
                             message => message?.PublicKeyBase58Check === contactWithMessages.PublicKeyBase58Check
                         );
-
                         if (newContactWithMessages) {
                             contactWithMessages = newContactWithMessages;
                         }
-
-                        if (isMounted) {
-                            initializeSections(contactWithMessages);
-                            setLoading(false);
-                        }
+                        renderMessages(contactWithMessages);
                     }
                 ).catch(error => globals.defaultHandleError(error));
             } else {
-                initializeSections(contactWithMessages);
-                setLoading(false);
+                renderMessages(contactWithMessages);
             }
-
-            Keyboard.addListener('keyboardWillShow', keyboardWillShow);
-            Keyboard.addListener('keyboardWillHide', keyboardWillHide);
-
+            const unsubscribeShowKeyboard = Keyboard.addListener('keyboardWillShow', keyboardWillShow);
+            const unsubscribeHideKeyboard = Keyboard.addListener('keyboardWillHide', keyboardWillHide);
             return () => {
                 isMounted.current = false;
-                Keyboard.removeListener('keyboardWillShow', keyboardWillShow);
-                Keyboard.removeListener('keyboardWillHide', keyboardWillHide);
+                unsubscribeShowKeyboard.remove();
+                unsubscribeHideKeyboard.remove();
             };
         },
         []
@@ -111,7 +108,6 @@ export function ChatScreen({ route }: Props) {
     function initializeSections(contactWithMessages: ContactWithMessages): void {
         const groupedMessages = groupMessagesByDay(contactWithMessages);
         const keys = Object.keys(groupedMessages);
-
         const newSections: Section[] = [];
 
         for (const key of keys) {
@@ -127,19 +123,83 @@ export function ChatScreen({ route }: Props) {
                     messages[i].LastOfGroup = true;
                 }
             }
-
             newSections.push(section);
         }
+        handleMessagesDecryption(newSections);
+    }
 
-        setSections(newSections);
+    function renderMessages(contactWithMessages: ContactWithMessages): void {
+        const contactWithMessagesCopy = JSON.parse(JSON.stringify(contactWithMessages));
+        contactWithMessagesRef.current = contactWithMessages;
+        const batchSize = 15;
+        const messagesCount = contactWithMessages.Messages.length;
+        lastVisitedIndex.current = messagesCount - batchSize;
+        let slicedMessages = contactWithMessagesCopy.Messages.slice(lastVisitedIndex.current);
+        if (batchSize > messagesCount) {
+            slicedMessages = contactWithMessagesCopy.Messages;
+            setIsKeyboardAvoidingViewEnabled(false);
+            setNoMoreMessages(true);
+        }
+        contactWithMessagesCopy.Messages = slicedMessages;
+        setContactWithMessagesState(contactWithMessagesCopy);
+        initializeSections(contactWithMessagesCopy);
+    }
+
+    function loadMoreMessages() {
+        if (noMoreMessages || isLoadingMore) {
+            return;
+        }
+        if (isMounted) {
+            setIsLoadingMore(true);
+        }
+        const contactWithMessages = JSON.parse(JSON.stringify(contactWithMessagesState));
+        const batchSize = 15;
+        const startIndex = Math.max(lastVisitedIndex.current - batchSize, 0);
+        const slicedMessages = contactWithMessagesRef.current.Messages.slice(startIndex, lastVisitedIndex.current);
+        if (startIndex === 0) {
+            setNoMoreMessages(true);
+        }
+        lastVisitedIndex.current = startIndex;
+        contactWithMessages.Messages = slicedMessages.concat(contactWithMessages.Messages);
+        setContactWithMessagesState(contactWithMessages);
+        initializeSections(contactWithMessages);
+    }
+
+    async function handleMessagesDecryption(sections: Section[]): Promise<void> {
+        let decryptedMessages: string[] = [];
+        const promises: Promise<Message | undefined>[] = [];
+        for (const section of sections) {
+            for (const message of section.data) {
+                const promise = new Promise<Message | undefined>(
+                    (p_resolve) => {
+                        getMessageText(message).then(
+                            (response: any) => {
+                                p_resolve(response);
+                            }
+                        ).catch(() => p_resolve(undefined));
+                    }
+                );
+                promises.push(promise);
+            }
+        }
+        decryptedMessages = await Promise.all(promises) as any;
+        let i, j, k = 0;
+        for (i = 0; i < sections.length; i++) {
+            for (j = 0; j < sections[i].data.length; j++) {
+                sections[i].data[j].DecryptedText = decryptedMessages[k];
+                k++;
+            }
+        }
+        setSections(sections);
+        setLoading(false);
+        setIsLoadingMore(false);
     }
 
     function groupMessagesByDay(contactWithMessages: ContactWithMessages): { [key: string]: Message[] } {
         const dayMessagesMap: { [key: string]: Message[] } = {};
-
-        if (contactWithMessages?.Messages?.length > 0) {
-            for (const message of contactWithMessages.Messages) {
-                const messageDate = new Date(message.TstampNanos / 1000000);
+        if (contactWithMessages.Messages?.length > 0) {
+            for (let i = contactWithMessages.Messages.length - 1; i >= 0; i--) {
+                const messageDate = new Date(contactWithMessages.Messages[i].TstampNanos / 1000000);
                 const formattedMessageDate = isToday(messageDate) ?
                     'Today' :
                     messageDate.toLocaleDateString(
@@ -150,10 +210,9 @@ export function ChatScreen({ route }: Props) {
                 if (!dayMessagesMap[formattedMessageDate]) {
                     dayMessagesMap[formattedMessageDate] = [];
                 }
-                dayMessagesMap[formattedMessageDate].push(message);
+                dayMessagesMap[formattedMessageDate].push(contactWithMessages.Messages[i]);
             }
         }
-
         return dayMessagesMap;
     }
 
@@ -165,7 +224,7 @@ export function ChatScreen({ route }: Props) {
     }
 
     async function onSendMessage(): Promise<void> {
-        const contactWithMessages = route.params.contactWithMessages;
+        const contactWithMessages = route.params?.contactWithMessages;
         const timeStampNanos = new Date().getTime() * 1000000;
 
         const message: Message = {
@@ -180,20 +239,12 @@ export function ChatScreen({ route }: Props) {
         };
 
         let todaySection: Section = {
-            date: '',
+            date: 'Today',
             data: []
         };
 
-        if (sections.length > 0 && sections[sections.length - 1].date === 'Today') {
-            todaySection = sections[sections.length - 1];
-        }
-
-        if (!todaySection) {
-            todaySection = {
-                date: 'Today',
-                data: []
-            };
-            sections.push(todaySection);
+        if (sections.length > 0 && sections[0].date === 'Today') {
+            todaySection = sections[0];
         }
 
         if (todaySection.data.length > 0) {
@@ -201,75 +252,84 @@ export function ChatScreen({ route }: Props) {
             if (lastMessage.IsSender) {
                 lastMessage.LastOfGroup = false;
             }
+        } else {
+            sections.unshift(todaySection);
         }
 
-        todaySection.data.push(message);
-        setSections(() => sections);
+        todaySection.data.unshift(message);
+        const Messages = [...contactWithMessagesState.Messages, message];
+        setContactWithMessagesState((prevState) => ({ ...prevState, Messages }));
+
+        if (sections.length === 0) {
+            const newSection = [
+                {
+                    date: 'Today',
+                    data: [message]
+                }
+            ];
+            setSections(newSection);
+        } else {
+            setSections(sections);
+        }
 
         try {
             const encryptedMessage = await signing.encryptShared(contactWithMessages.PublicKeyBase58Check, messageText);
             setMessageText('');
-
-            api.sendMessage(globals.user.publicKey, contactWithMessages.PublicKeyBase58Check, encryptedMessage)
-                .then(
-                    async response => {
-                        const transactionHex = response.TransactionHex;
-                        const signedTransactionHex = await signing.signTransaction(transactionHex);
-                        await api.submitTransaction(signedTransactionHex);
-                    }
-                ).catch(error => globals.defaultHandleError(error));
+            const response = await api.sendMessage(globals.user.publicKey, contactWithMessages.PublicKeyBase58Check, encryptedMessage);
+            const transactionHex = response.TransactionHex;
+            const signedTransactionHex = await signing.signTransaction(transactionHex);
+            await api.submitTransaction(signedTransactionHex);
         } catch (exception) {
             globals.defaultHandleError(exception);
         }
     }
 
     function scrollToBottom(animated: boolean): void {
-        if (sectionListRef?.current && sections?.length > 0) {
-            const sectionIndex = sections.length - 1;
-            const itemIndex = sections[sectionIndex].data.length - 1;
-            sectionListRef.current.scrollToLocation({ itemIndex: itemIndex, sectionIndex: sectionIndex, animated: animated });
+        if (sectionListRef?.current && sections?.length > 0 && isKeyboardAvoidingViewEnabled) {
+            sectionListRef.current.scrollToLocation({ itemIndex: 0, sectionIndex: 0, animated });
         }
     }
 
-    const renderItem = (item: Message) => <View style={styles.messageComponent}>
+    const keyExtractor = (item: Message, index: number) => `${item.SenderPublicKeyBase58Check}_${item.TstampNanos}_${index.toString()}`;
+    const renderItem = ({ item }: { item: Message }) => <View style={{ flexDirection: 'row' }}>
         <MessageComponent message={item} />
     </View>;
 
-    const keyExtractor = (item: Message, index: number) => `${item.SenderPublicKeyBase58Check}_${item.TstampNanos}_${index.toString()}`;
-
-    const renderHeader = (date: string) => <View style={[styles.dateContainer, themeStyles.chipColor]}>
+    const renderSectionDate = ({ section: { date } }: any): JSX.Element => <View style={[styles.dateContainer, themeStyles.chipColor]}>
         <Text style={[styles.dateText, themeStyles.fontColorMain]}>{date}</Text>
     </View>;
+
+    const renderFooter = isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : <></>;
+    const keyboardBehavior = Platform.OS === 'ios' ? 'position' : 'height';
 
     return isLoading ?
         <CloutFeedLoader />
         :
         <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'position' : 'height'}
-            keyboardVerticalOffset={65}>
-            <View style={[styles.container, themeStyles.containerColorSub, { paddingTop: paddingTop }]}>
+            behavior={keyboardBehavior}
+            keyboardVerticalOffset={65}
+        >
+            <View style={[styles.container, { paddingTop: paddingTop }]}>
                 <SectionList
+                    inverted
+                    style={{ transform: [{ scaleY: -1 }] }}
+                    contentContainerStyle={styles.flatListStyle}
                     ref={sectionListRef}
-                    onContentSizeChange={() => scrollToBottom(false)}
                     onScrollToIndexFailed={() => { undefined; }}
                     showsVerticalScrollIndicator={false}
-                    stickySectionHeadersEnabled={false}
+                    initialNumToRender={5}
+                    invertStickyHeaders={false}
+                    onEndReachedThreshold={0.01}
+                    onEndReached={loadMoreMessages}
+                    ListFooterComponent={renderFooter}
                     sections={sections}
                     keyExtractor={keyExtractor}
-                    renderItem={({ item }) => renderItem(item)}
-                    renderSectionHeader={({ section: { date } }) => renderHeader(date)}
+                    renderItem={renderItem}
+                    renderSectionFooter={renderSectionDate}
                 />
-                <View style={[
-                    styles.textInputContainer,
-                    { height: textInputHeight + 45 }
-                ]}>
+                <View style={[styles.textInputContainer, { height: textInputHeight + 45 }]}>
                     <TextInput
-                        style={
-                            [
-                                styles.textInput,
-                                { height: textInputHeight }
-                            ]
-                        }
+                        style={[styles.textInput, { height: textInputHeight }]}
                         onContentSizeChange={(event) => {
                             if (isMounted) {
                                 setTextInputHeight(
@@ -277,6 +337,7 @@ export function ChatScreen({ route }: Props) {
                                 );
                             }
                         }}
+                        onFocus={() => scrollToBottom(true)}
                         onChangeText={setMessageText}
                         value={messageText}
                         blurOnSubmit={false}
@@ -302,6 +363,12 @@ const styles = StyleSheet.create(
             marginTop: 1,
             width: Dimensions.get('window').width,
             height: '100%'
+        },
+        flatListStyle: {
+            flexGrow: 1,
+            justifyContent: 'flex-end',
+            paddingTop: 5,
+            paddingBottom: 10,
         },
         dateContainer: {
             alignSelf: 'center',
@@ -339,8 +406,5 @@ const styles = StyleSheet.create(
         sendButton: {
             marginRight: 5
         },
-        messageComponent: {
-            flexDirection: 'row'
-        }
     }
 );
