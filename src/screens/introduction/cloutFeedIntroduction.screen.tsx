@@ -5,6 +5,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import IntroSlideComponent from './components/introSlide.component';
 import { introduction, IntroductionElement } from './components/introContent';
 import { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { isPortrait } from '@services/helpers';
+import { globals } from '@globals/globals';
 
 interface Props {
     navigation: NavigationProp<ParamListBase>;
@@ -14,15 +16,20 @@ interface State {
     currentSlide: number;
     totalSlides: number;
     isNext: boolean;
+    currentScreenDimension: number;
 }
 
-const { width: screenWidth } = Dimensions.get('screen');
+const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
 export default class CloutFeedIntroduction extends React.Component<Props, State> {
+
+    private _isMounted = false;
 
     private _scrollViewRef: React.RefObject<ScrollView>;
 
     private _startButtonOpacity: Animated.Value = new Animated.Value(0);
+
+    private _isInitiallyPortrait = true;
 
     constructor(props: Props) {
         super(props);
@@ -31,20 +38,60 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
             totalSlides: 0,
             currentSlide: 1,
             isNext: false,
+            currentScreenDimension: screenWidth,
         };
 
         this._scrollViewRef = React.createRef();
         this.goToNext = this.goToNext.bind(this);
         this.onNavigate = this.onNavigate.bind(this);
+        this.handleDimensionChange = this.handleDimensionChange.bind(this);
+        if (globals.isDeviceTablet) {
+            this.init = this.init.bind(this);
+            this.init();
+            Dimensions.addEventListener(
+                'change',
+                () => {
+                    let currentScreenDimension = isPortrait() ? screenWidth : screenHeight;
+                    if (!this._isInitiallyPortrait) {
+                        currentScreenDimension = isPortrait() ? screenHeight : screenWidth;
+                    }
+                    if (this._isMounted) {
+                        this.setState({ currentScreenDimension });
+                    }
+                    this.handleDimensionChange();
+                }
+            );
+        }
+    }
+
+    componentDidMount(): void {
+        this._isMounted = true;
+    }
+
+    componentWillUnmount(): void {
+        this._isMounted = false;
+    }
+
+    private init(): void {
+        let currentScreenDimension = screenWidth;
+        if (!isPortrait()) {
+            this._isInitiallyPortrait = false;
+            currentScreenDimension = screenHeight;
+        }
+        if (this._isMounted) {
+            this.setState({ currentScreenDimension });
+        }
     }
 
     private calculateTotalSlides = (contentWidth: number) => {
         if (contentWidth !== 0) {
-            const approxSlide = contentWidth / screenWidth;
+            const approxSlide = contentWidth / this.state.currentScreenDimension;
             if (this.state.totalSlides !== approxSlide) {
-                this.setState({
-                    totalSlides: parseInt(String(Math.ceil(approxSlide.toFixed(2))))
-                });
+                this.setState(
+                    {
+                        totalSlides: parseInt(String(Math.ceil(parseInt(approxSlide.toFixed(2)))))
+                    }
+                );
                 this.setNext(introduction.length > this.state.currentSlide);
             }
         }
@@ -59,7 +106,7 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
             if (event.nativeEvent.contentOffset.x === 0) {
                 this.setState({ currentSlide });
             } else {
-                const approxCurrentSlide: number = event.nativeEvent.contentOffset.x / screenWidth;
+                const approxCurrentSlide: number = event.nativeEvent.contentOffset.x / this.state.currentScreenDimension;
                 const parsedApproxCurrentSlide: number = parseInt(approxCurrentSlide.toFixed(2));
                 currentSlide = parseInt(String(Math.ceil(parsedApproxCurrentSlide) + 1));
                 this.setState({ currentSlide });
@@ -68,10 +115,19 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
         }
     }
 
+    private handleDimensionChange() {
+        if (this._scrollViewRef) {
+            (this._scrollViewRef as any)?.scrollTo({ x: 1, y: 0, animated: true });
+            if (Platform.OS === 'android') {
+                this.handleScrollEnd({ nativeEvent: { contentOffset: { y: 0, x: 0 } } });
+            }
+        }
+    }
+
     private goToNext() {
         if (this._scrollViewRef) {
-            const scrollPoint = this.state.currentSlide * screenWidth;
-            this._scrollViewRef.scrollTo({ x: scrollPoint, y: 0, animated: true });
+            const scrollPoint = this.state.currentSlide * this.state.currentScreenDimension;
+            (this._scrollViewRef as any).scrollTo({ x: scrollPoint, y: 0, animated: true });
             if (Platform.OS === 'android') {
                 this.handleScrollEnd({ nativeEvent: { contentOffset: { y: 0, x: scrollPoint } } });
             }
@@ -114,11 +170,14 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
             }).start();
         }
 
-        return <ScrollView style={[styles.container, themeStyles.containerColorMain]}>
+        return <ScrollView
+            bounces={false}
+            contentContainerStyle={globals.isDeviceTablet && styles.containerScrollViewStyle}
+            style={[styles.container, themeStyles.containerColorMain]}>
             <View style={{ flex: 1 }}>
                 <ScrollView
                     style={styles.scrollViewStyle}
-                    ref={(ref) => { this._scrollViewRef = ref; }}
+                    ref={(ref) => { this._scrollViewRef = ref as any; }}
                     horizontal
                     pagingEnabled
                     showsHorizontalScrollIndicator={false}
@@ -129,7 +188,10 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
                 >
                     {
                         introduction.map(
-                            (item: IntroductionElement, index: number) => <IntroSlideComponent key={index.toString()} {...item} />
+                            (item: IntroductionElement, index: number) => <IntroSlideComponent
+                                isInitiallyPortrait={this._isInitiallyPortrait}
+                                screenDimension={this.state.currentScreenDimension}
+                                key={index.toString()} {...item} />
                         )
                     }
                 </ScrollView>
@@ -143,7 +205,6 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
                 </View>
             </View>
             <View style={styles.buttonContainer}>
-
                 <TouchableOpacity
                     style={[styles.button, !this.state.isNext && themeStyles.buttonDisabledColor]}
                     activeOpacity={1}
@@ -152,7 +213,7 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
                     <Text style={styles.buttonText}>Next</Text>
                 </TouchableOpacity>
 
-                <Animated.View style={{ opacity: this._startButtonOpacity, width: '100%' }}>
+                <Animated.View style={{ opacity: this._startButtonOpacity, width: '100%', maxWidth: 360 }}>
                     <TouchableOpacity onPress={() => this.onNavigate()} style={styles.button} activeOpacity={1}>
                         <Text style={styles.buttonText}>Start Clouting!</Text>
                     </TouchableOpacity>
@@ -164,12 +225,16 @@ export default class CloutFeedIntroduction extends React.Component<Props, State>
 
 const styles = StyleSheet.create(
     {
+        containerScrollViewStyle: {
+            justifyContent: 'space-around',
+            flexGrow: 1,
+        },
         container: {
             flex: 1,
             paddingVertical: 0,
         },
         scrollViewStyle: {
-            paddingTop: 20
+            paddingTop: 20,
         },
         buttonContainer: {
             alignItems: 'center',
@@ -182,6 +247,7 @@ const styles = StyleSheet.create(
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
+            maxWidth: 360,
             borderRadius: 5,
             marginVertical: 10,
         },

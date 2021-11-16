@@ -361,7 +361,7 @@ const styles = StyleSheet.create(
     {
         container: {
             marginTop: 1,
-            width: Dimensions.get('window').width,
+            width: '100%',
             height: '100%'
         },
         flatListStyle: {

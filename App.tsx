@@ -36,6 +36,8 @@ import { UserContext } from '@globals/userContext';
 import { Post, HiddenNFTType } from '@types';
 import { CloutFeedTheme } from '@types';
 import { authenticateWithDeSoIdentity, isDerivedKeyValid, revokeDerivedKey } from './src/services/authorization/deSoAuthentication';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import * as Device from 'expo-device';
 
 enableScreens();
 
@@ -80,6 +82,7 @@ export default function App(): JSX.Element {
 
   useEffect(
     () => {
+      handleScreenOrientation();
       AppState.addEventListener('change', handleAppStateChange);
 
       const unsubscribeProfileManager = eventManager.addEventListener(
@@ -136,6 +139,18 @@ export default function App(): JSX.Element {
     },
     []
   );
+
+  async function handleScreenOrientation() {
+    const response = await Device.getDeviceTypeAsync();
+    if (
+      response === Device.DeviceType.TABLET ||
+      response === Device.DeviceType.TV ||
+      response === Device.DeviceType.DESKTOP
+    ) {
+      await ScreenOrientation.unlockAsync();
+      globals.isDeviceTablet = true;
+    }
+  }
 
   function notificationListener() {
     api.getNotifications(globals.user.publicKey, -1, 1).then(

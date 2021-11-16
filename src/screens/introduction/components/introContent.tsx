@@ -12,7 +12,7 @@ export const introduction: IntroductionElement[] = [
     {
         title: 'Welcome!',
         imageUri: require('../../../../assets/intro1.png'),
-        description: <Text>DeSo is a new type of social network that mixes speculation and social media, and it’s built from the ground up as its own custom blockchain. Its architecture is similar to Bitcoin.{'\n'}{'\n'}Like Bitcoin, DeSo is a fully open-source project and there is no company behind it; it’s just coins and code.
+        description: <Text>DeSo is a new type of social network that mixes speculation and social media, and it’s built from the ground up as its own custom blockchain. Its architecture is similar to Bitcoin.{'\n'}{'\n'}{'\n'}Like Bitcoin, DeSo is a fully open-source project and there is no company behind it; it’s just coins and code.
             For more info, check
             {' '}<Text
                 onPress={() => Linking.openURL('https://docs.bitclout.com/')}

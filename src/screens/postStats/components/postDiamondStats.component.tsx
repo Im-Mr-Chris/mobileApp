@@ -1,4 +1,4 @@
-import { View, ActivityIndicator, FlatList, StyleSheet, Text, Dimensions, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import React from 'react';
 import { Profile } from '@types';
@@ -149,14 +149,11 @@ const styles = StyleSheet.create(
             flex: 1,
         },
         diamondSenderCard: {
-            display: 'flex',
             flexDirection: 'row',
-            paddingTop: 16,
-            paddingBottom: 16,
-            paddingLeft: 10,
-            paddingRight: 10,
+            paddingVertical: 16,
+            paddingHorizontal: 10,
             borderBottomWidth: 1,
-            width: Dimensions.get('window').width
+            width: '100%'
         },
         diamondsContainer: {
             flexDirection: 'row',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet, View, Image, TouchableOpacity, ScrollView, Linking } from 'react-native';
+import { Text, StyleSheet, View, Image, TouchableOpacity, ScrollView, Linking, Dimensions } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
 import { themeStyles } from '@styles';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,6 +14,8 @@ interface Props {
 interface State {
     areTermsAndConditionsAccepted: boolean;
 }
+
+const { height: screenHeight } = Dimensions.get('window');
 
 export default class TermsConditionsScreen extends React.Component<Props, State> {
 
@@ -428,38 +430,42 @@ us:
 
     render() {
 
-        return <View style={[styles.container, themeStyles.containerColorMain]}>
-            <Image style={styles.image} source={require('../../../assets/termsAndConditions.png')} />
-            <Text style={styles.title}>Terms & Conditions</Text>
-            <ScrollView contentContainerStyle={styles.scrollView} style={styles.termsAndConditionsContainer}>
-                <Text style={styles.termsText}>{this._termsAndCondition}</Text>
-            </ScrollView>
-            <View style={styles.checkBoxContainer}>
-                <TouchableOpacity activeOpacity={1} onPress={this.handleTermsConditions}>
-                    {
-                        this.state.areTermsAndConditionsAccepted ?
-                            <MaterialCommunityIcons name="checkbox-marked" size={24} color="black" />
-                            :
-                            <MaterialCommunityIcons name="checkbox-blank-outline" size={24} color="black" />
-                    }
-                </TouchableOpacity>
+        return <ScrollView contentContainerStyle={styles.scrollViewStyle} style={[styles.container, themeStyles.containerColorMain]}>
+            <View style={[styles.containerView, styles.container, themeStyles.containerColorMain]}>
+                <Image style={styles.image} source={require('../../../assets/termsAndConditions.png')} />
+                <Text style={styles.title}>Terms & Conditions</Text>
+                <View style={styles.scrollViewContainer}>
+                    <ScrollView nestedScrollEnabled={true} contentContainerStyle={styles.scrollView} style={styles.termsAndConditionsContainer}>
+                        <Text style={styles.termsText}>{this._termsAndCondition}</Text>
+                    </ScrollView>
+                </View>
+                <View style={styles.checkBoxContainer}>
+                    <TouchableOpacity activeOpacity={1} onPress={this.handleTermsConditions}>
+                        {
+                            this.state.areTermsAndConditionsAccepted ?
+                                <MaterialCommunityIcons name="checkbox-marked" size={24} color="black" />
+                                :
+                                <MaterialCommunityIcons name="checkbox-blank-outline" size={24} color="black" />
+                        }
+                    </TouchableOpacity>
 
-                <Text style={styles.checkBoxText}>
-                    I agree to
-                    <Text onPress={() => Linking.openURL('https://clouttechnologies.com/terms-%26-conditions')} style={styles.linkText}> Terms & Conditions </Text>
-                    and{' '}
-                    <Text onPress={() => Linking.openURL('https://clouttechnologies.com/privacy-policy')} style={styles.linkText}>Privacy Policy</Text>
-                </Text>
+                    <Text style={styles.checkBoxText}>
+                        I agree to
+                        <Text onPress={() => Linking.openURL('https://clouttechnologies.com/terms-%26-conditions')} style={styles.linkText}> Terms & Conditions </Text>
+                        and{' '}
+                        <Text onPress={() => Linking.openURL('https://clouttechnologies.com/privacy-policy')} style={styles.linkText}>Privacy Policy</Text>
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    disabled={!this.state.areTermsAndConditionsAccepted}
+                    style={[styles.button, { backgroundColor: this.state.areTermsAndConditionsAccepted ? 'black' : '#999999' }]}
+                    onPress={this.onAccept}
+                    activeOpacity={1}
+                >
+                    <Text style={styles.buttonText}>Accept & Continue</Text>
+                </TouchableOpacity>
             </View>
-            <TouchableOpacity
-                disabled={!this.state.areTermsAndConditionsAccepted}
-                style={[styles.button, { backgroundColor: this.state.areTermsAndConditionsAccepted ? 'black' : '#999999' }]}
-                onPress={this.onAccept}
-                activeOpacity={1}
-            >
-                <Text style={styles.buttonText}>Accept & Continue</Text>
-            </TouchableOpacity>
-        </View>;
+        </ScrollView>;
     }
 }
 
@@ -467,8 +473,15 @@ const styles = StyleSheet.create(
     {
         container: {
             flex: 1,
-            paddingVertical: 50,
+            paddingTop: 20,
+            paddingBottom: 50,
             paddingHorizontal: 10,
+        },
+        containerView: {
+            justifyContent: 'space-around'
+        },
+        scrollViewStyle: {
+            flexGrow: 1,
         },
         image: {
             width: 100,
@@ -486,6 +499,7 @@ const styles = StyleSheet.create(
             padding: 10,
             justifyContent: 'center',
             alignItems: 'center',
+            maxWidth: 500,
             width: '100%',
             borderRadius: 5,
             marginVertical: 10,
@@ -502,6 +516,9 @@ const styles = StyleSheet.create(
             borderRadius: 3,
             borderColor: '#969696',
             paddingHorizontal: 15,
+        },
+        scrollViewContainer: {
+            height: screenHeight * 0.55
         },
         scrollView: {
             paddingVertical: 15,

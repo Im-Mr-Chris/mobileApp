@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Profile } from '../types';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { themeStyles } from '@styles';
@@ -134,7 +134,7 @@ const styles = StyleSheet.create(
             flexDirection: 'row',
             paddingVertical: 16,
             paddingHorizontal: 10,
-            width: Dimensions.get('window').width,
+            width: '100%',
             alignItems: 'center'
         },
         followBtn: {

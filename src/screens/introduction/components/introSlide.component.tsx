@@ -1,27 +1,64 @@
 import React from 'react';
-import { StyleSheet, View, Image, Text, Dimensions, ImageSourcePropType } from 'react-native';
+import { StyleSheet, View, Image, Text, Dimensions, ImageSourcePropType, } from 'react-native';
 import { themeStyles } from '@styles/globalColors';
+import { globals } from '@globals/globals';
 
 interface Props {
     title: string;
     imageUri: string;
     description: JSX.Element | string;
+    screenDimension: number;
+    isInitiallyPortrait: boolean;
 }
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('screen');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default class introSlideComponent extends React.Component<Props> {
+
+    private _isMounted = false;
 
     constructor(props: Props) {
         super(props);
     }
 
-    render() {
-        return <View style={[styles.container]}>
-            <Image style={styles.image} source={(this.props.imageUri as ImageSourcePropType)} />
-            <Text style={[styles.title, themeStyles.fontColorMain]}>{this.props.title}</Text>
+    componentDidMount(): void {
+        this._isMounted = true;
+    }
+
+    componentWillUnmount(): void {
+        this._isMounted = false;
+    }
+
+    render(): JSX.Element {
+
+        const imageWidth = this.props.isInitiallyPortrait ? screenWidth : screenHeight;
+        const imageHeight = this.props.isInitiallyPortrait ? screenHeight : screenWidth;
+        const titleFontSize = globals.isDeviceTablet ? 25 : 18;
+        const subTitleFontSize = globals.isDeviceTablet ? 20 : 15;
+        const width = this.props.screenDimension;
+        return <View style={
+            [
+                styles.container,
+                { width },
+                globals.isDeviceTablet && { justifyContent: 'space-evenly' }
+            ]
+        }>
+            <Image style={[styles.image, { width: imageWidth * 0.2, height: imageHeight * 0.2 }]} source={(this.props.imageUri as ImageSourcePropType)} />
+            <Text style={
+                [
+                    { fontSize: titleFontSize },
+                    styles.title,
+                    themeStyles.fontColorMain
+                ]
+            }>{this.props.title}</Text>
             <View style={styles.descriptionContainer} >
-                <Text style={[styles.description, themeStyles.fontColorMain]}>{this.props.description}</Text>
+                <Text style={
+                    [
+                        { fontSize: subTitleFontSize },
+                        styles.description,
+                        themeStyles.fontColorMain
+                    ]
+                }>{this.props.description}</Text>
             </View>
         </View>;
     }
@@ -30,25 +67,20 @@ export default class introSlideComponent extends React.Component<Props> {
 const styles = StyleSheet.create(
     {
         container: {
-            width: screenWidth,
             alignItems: 'center',
-            padding: 20
+            padding: 20,
         },
         image: {
-            width: screenWidth * 0.2,
-            height: screenHeight * 0.2,
             aspectRatio: 1,
             marginBottom: 20
         },
         title: {
-            fontSize: 24,
             fontWeight: 'bold',
             marginBottom: 20
         },
         description: {
             textAlign: 'center',
             fontWeight: '600',
-            fontSize: 15,
             paddingBottom: 10,
         },
         descriptionContainer: {

@@ -103,7 +103,7 @@ export function LoginWithUsername(props: Props): JSX.Element {
 
     const renderButton = (text: string, onPress: () => Promise<void>) => {
         return <TouchableOpacity
-            style={[styles.loginButton, { backgroundColor: working ? '#999999' : 'black' }]}
+            style={[styles.loginButton, { backgroundColor: working ? '#999999' : 'black' }, styles.contentWidth]}
             onPress={() => onPress()} disabled={working}
             activeOpacity={1}
         >
@@ -113,7 +113,7 @@ export function LoginWithUsername(props: Props): JSX.Element {
 
     return <View style={styles.loginOptionsContainer}>
         <TextInput
-            style={styles.input}
+            style={[styles.input, styles.contentWidth]}
             placeholder='Enter your username...'
             value={username}
             onChangeText={onTextChange}
@@ -128,7 +128,6 @@ export function LoginWithUsername(props: Props): JSX.Element {
         }
 
         <TouchableOpacity
-            style={styles.backButton}
             onPress={() => props.onBack()}
             disabled={working}
         >
@@ -139,26 +138,26 @@ export function LoginWithUsername(props: Props): JSX.Element {
 
 const styles = StyleSheet.create(
     {
+        contentWidth: {
+            width: '80%',
+            maxWidth: 400
+        },
         input: {
             borderWidth: 1,
             borderColor: '#777',
-            paddingTop: 16,
-            paddingBottom: 16,
-            paddingRight: 8,
-            paddingLeft: 8,
+            paddingHorizontal: 8,
             margin: 16,
-            alignSelf: 'stretch',
+            height: 44,
             borderRadius: 8,
-            lineHeight: 20,
+            justifyContent: 'center',
+            alignItems: 'center',
             backgroundColor: '#262525',
-            color: '#b0b3b8'
+            color: '#b0b3b8',
         },
         loginButton: {
             backgroundColor: 'black',
             color: 'white',
-            alignSelf: 'stretch',
-            marginRight: 16,
-            marginLeft: 16,
+            marginHorizontal: 16,
             marginBottom: 10,
             height: 44,
             alignItems: 'center',
@@ -183,9 +182,5 @@ const styles = StyleSheet.create(
             marginBottom: 5,
             fontSize: 12
         },
-        backButton: {
-            paddingLeft: 20,
-            paddingRight: 20
-        }
     }
 );

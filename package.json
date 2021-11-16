@@ -69,7 +69,9 @@
     "victory-native": "^35.3.3",
     "expo-blur": "~9.0.3",
     "expo-linking": "~2.3.1",
-    "expo-auth-session": "~3.3.1"
+    "expo-auth-session": "~3.3.1",
+    "expo-screen-orientation": "~3.3.0",
+    "expo-device": "~3.3.0"
   },
   "devDependencies": {
     "@babel/core": "~7.14.6",

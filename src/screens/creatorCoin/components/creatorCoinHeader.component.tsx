@@ -82,12 +82,9 @@ export class CreatorCoinHeaderComponent extends React.Component<Props, State> {
 const styles = StyleSheet.create(
     {
         profileListCard: {
-            display: 'flex',
             flexDirection: 'row',
-            paddingTop: 16,
-            paddingBottom: 16,
-            paddingLeft: 10,
-            paddingRight: 10
+            paddingVertical: 16,
+            paddingHorizontal: 10,
         },
         profileImage: {
             width: 50,

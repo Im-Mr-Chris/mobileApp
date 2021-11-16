@@ -221,3 +221,9 @@ export interface SearchHistoryProfile {
     ProfilePic: string;
     PublicKeyBase58Check: string;
 }
+
+export interface LoginButton {
+    title: string;
+    label: string;
+    action: () => void;
+}

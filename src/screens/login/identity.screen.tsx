@@ -125,9 +125,12 @@ export class IdentityScreen extends React.Component<Props, State> {
                 nonStandardPublicKey={this.state.nonStandardPublicKey}
                 back={this.back}
                 selectAccount={this.selectAccount}
-            ></LoginUserListComponent>
+            />
             :
-            <ScrollView style={[styles.container]} bounces={false}>
+            <ScrollView
+                contentContainerStyle={styles.scrollViewStyle}
+                style={styles.container}
+                bounces={false}>
                 <Text style={styles.text}>Enter your seed phrase to load your account</Text>
                 <TextInput
                     autoCapitalize='none'
@@ -146,7 +149,7 @@ export class IdentityScreen extends React.Component<Props, State> {
                         <>
                             <Text style={styles.text}>If you have a passphrase, enter it below.</Text>
                             <TextInput
-                                style={[styles.textInput]}
+                                style={styles.textInput}
                                 onChangeText={value => this.extraText = value}
                                 multiline={true}
                                 placeholder={'Enter your passphrase here.'}
@@ -176,10 +179,13 @@ export class IdentityScreen extends React.Component<Props, State> {
 
 const styles = StyleSheet.create(
     {
+        scrollViewStyle: {
+            alignItems: 'center'
+        },
         container: {
             flex: 1,
             backgroundColor: '#171717',
-            padding: 10
+            padding: 10,
         },
         text: {
             color: '#ebebeb',
@@ -189,6 +195,8 @@ const styles = StyleSheet.create(
             color: '#ebebeb',
             height: 100,
             borderWidth: 1,
+            width: '100%',
+            maxWidth: 500,
             borderColor: '#4a4a4a',
             padding: 10,
             paddingTop: 10,
@@ -197,13 +205,15 @@ const styles = StyleSheet.create(
         },
         loginButton: {
             color: 'white',
-            alignSelf: 'stretch',
             height: 44,
+            width: '100%',
+            maxWidth: 500,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 5,
             marginBottom: 10,
             borderWidth: 1,
+            marginTop: 20,
             borderColor: '#404040'
         },
         loginButtonText: {

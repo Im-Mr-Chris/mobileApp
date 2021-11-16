@@ -1,7 +1,7 @@
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { calculateAndFormatDeSoInUsd, formatNumber, getAnonymousProfile } from '@services';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { formatNumber, getAnonymousProfile } from '@services';
 import { CreatorCoinHODLer } from '@types';
 import { themeStyles } from '@styles';
 import ProfileInfoCardComponent from './profileInfo/profileInfoCard.component';
@@ -13,11 +13,10 @@ interface Props {
     isHolder: boolean;
 }
 
-export function CreatorCoinHODLerComponent({ creatorCoinPrice, userWhoHODL: userWhoHODL, isHolder }: Props): JSX.Element {
+export function CreatorCoinHODLerComponent({ creatorCoinPrice, userWhoHODL: userWhoHODL }: Props): JSX.Element {
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
     let mount = true;
-    const [hodlerCoinPriceUSD, setHODLerCoinPrice] = useState('');
     const [hodlerAmountCoins, setHODLerAmountCoins] = useState('');
     const [hodlerAmountUSD, setHODLerAmountUSD] = useState('');
 
@@ -29,8 +28,6 @@ export function CreatorCoinHODLerComponent({ creatorCoinPrice, userWhoHODL: user
                     userWhoHODL.ProfileEntryResponse = getAnonymousProfile(userWhoHODL.HODLerPublicKeyBase58Check);
                 }
 
-                const hodlerCoinPriceUSD = calculateAndFormatDeSoInUsd(
-                    userWhoHODL.ProfileEntryResponse.CoinPriceDeSoNanos);
                 const hodlerAmountCoins = userWhoHODL.BalanceNanos / 1000000000;
 
                 if (creatorCoinPrice == null) {
@@ -41,7 +38,6 @@ export function CreatorCoinHODLerComponent({ creatorCoinPrice, userWhoHODL: user
                 const formattedHODLerAmountInUSD = formatNumber(hodlerAmountUSD);
 
                 if (mount) {
-                    setHODLerCoinPrice(hodlerCoinPriceUSD);
                     setHODLerAmountCoins(hodlerAmountCoins.toFixed(4));
                     setHODLerAmountUSD(formattedHODLerAmountInUSD);
                 }
@@ -91,7 +87,7 @@ const styles = StyleSheet.create(
             paddingVertical: 16,
             paddingHorizontal: 10,
             borderBottomWidth: 1,
-            width: Dimensions.get('window').width
+            width: '100%'
 
         },
         HODLerAmountContainer: {

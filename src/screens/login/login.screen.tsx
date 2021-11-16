@@ -12,12 +12,12 @@ export function LoginScreen({ navigation }: any) {
     useEffect(
         () => {
             checkCloutFeedIdentity();
-            Keyboard.addListener('keyboardDidShow', keyboardDidShow);
-            Keyboard.addListener('keyboardDidHide', keyboardDidHide);
+            const subscribeToKeyboardDidShow = Keyboard.addListener('keyboardDidShow', keyboardDidShow);
+            const subscribeToKeyboardDidHide = Keyboard.addListener('keyboardDidHide', keyboardDidHide);
 
             return () => {
-                Keyboard.removeListener('keyboardDidShow', keyboardDidShow);
-                Keyboard.removeListener('keyboardDidHide', keyboardDidHide);
+                subscribeToKeyboardDidShow.remove();
+                subscribeToKeyboardDidHide.remove();
             };
         },
         []
@@ -68,12 +68,12 @@ const styles = StyleSheet.create(
         container: {
             flex: 1,
             backgroundColor: '#121212',
-            alignItems: 'center'
+            justifyContent: 'space-evenly',
+            alignItems: 'center',
         },
         contentContainerStyle: {
             flexGrow: 1,
             backgroundColor: '#121212',
-            paddingBottom: 20,
         },
         title: {
             fontSize: 36,
@@ -93,11 +93,11 @@ const styles = StyleSheet.create(
         modeText: {
             color: '#b0b3b8',
             marginBottom: 5,
-            fontSize: 12
+            fontSize: 12,
+            marginTop: 'auto'
         },
         linkText: {
-            marginTop: 'auto',
-            height: 100,
+            marginBottom: '15%',
             fontSize: 16,
             textAlignVertical: 'center'
         },

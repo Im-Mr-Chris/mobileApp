@@ -1,6 +1,6 @@
 import React from 'react';
 import { FontAwesome } from '@expo/vector-icons';
-import { TouchableOpacity, View, Text, StyleSheet, Dimensions } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { DiamondSender } from '@types';
 import { themeStyles } from '@styles';
 import { calculateAndFormatDeSoInUsd, getAnonymousProfile } from '@services';
@@ -90,7 +90,7 @@ const styles = StyleSheet.create(
             paddingVertical: 16,
             paddingHorizontal: 10,
             borderBottomWidth: 1,
-            width: Dimensions.get('window').width
+            width: '100%'
 
         },
         diamondIcon: {

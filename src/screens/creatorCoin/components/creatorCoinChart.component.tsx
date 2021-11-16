@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { CreatorCoinTransaction } from '@types';
 import { VictoryArea, VictoryAxis, VictoryChart, VictoryScatter, VictoryTooltip } from 'victory-native';
 import { themeStyles } from '@styles/globalColors';
-import { formatNumber } from '@services/helpers';
+import { formatNumber, isPortrait } from '@services/helpers';
 import Svg, { Defs, LinearGradient, Stop } from 'react-native-svg';
+import { globals } from '@globals/globals';
 
 interface Props {
     publicKey: string;
@@ -14,9 +15,16 @@ interface Props {
 
 interface State {
     aggregatedDate: { x: number, y: number }[];
+    currentScreenDimension: number;
 }
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 export class CreatorCoinChartComponent extends React.Component<Props, State> {
+
+    private _isInitiallyPortrait = true;
+
+    private _isMounted = false;
 
     constructor(props: Props) {
         super(props);
@@ -32,15 +40,53 @@ export class CreatorCoinChartComponent extends React.Component<Props, State> {
         }
 
         this.state = {
-            aggregatedDate: data
+            aggregatedDate: data,
+            currentScreenDimension: screenWidth,
         };
+
+        if (globals.isDeviceTablet) {
+            this.init = this.init.bind(this);
+            this.init();
+            Dimensions.addEventListener(
+                'change',
+                () => {
+                    let currentScreenDimension = isPortrait() ? screenWidth : screenHeight;
+                    if (!this._isInitiallyPortrait) {
+                        currentScreenDimension = isPortrait() ? screenHeight : screenWidth;
+                    }
+                    if (this._isMounted) {
+                        this.setState({ currentScreenDimension });
+                    }
+                }
+            );
+        }
     }
 
-    shouldComponentUpdate(p_nextProps: Props) {
-        return p_nextProps.creatorCoinTransactions.length !== this.props.creatorCoinTransactions.length;
+    componentDidMount(): void {
+        this._isMounted = true;
     }
 
-    aggregateData() {
+    componentWillUnmount(): void {
+        this._isMounted = false;
+    }
+
+    shouldComponentUpdate(nextProps: Props, nextState: State): boolean {
+        return nextProps.creatorCoinTransactions.length !== this.props.creatorCoinTransactions.length ||
+            this.state.currentScreenDimension !== nextState.currentScreenDimension;
+    }
+
+    private init(): void {
+        let currentScreenDimension = screenWidth;
+        if (!isPortrait()) {
+            this._isInitiallyPortrait = false;
+            currentScreenDimension = screenHeight;
+        }
+        if (this._isMounted) {
+            this.setState({ currentScreenDimension });
+        }
+    }
+
+    private aggregateData(): number[] {
         const coinPricePerDayMap: { [key: string]: number[] } = {};
 
         for (const coinPrice of this.props.creatorCoinTransactions) {
@@ -68,7 +114,7 @@ export class CreatorCoinChartComponent extends React.Component<Props, State> {
         return result;
     }
 
-    getAverage(p_numbers: number[]) {
+    private getAverage(p_numbers: number[]): number {
         let sum = 0;
 
         for (const number of p_numbers) {
@@ -78,10 +124,11 @@ export class CreatorCoinChartComponent extends React.Component<Props, State> {
         return sum / p_numbers.length;
     }
 
-    render() {
+    render(): JSX.Element {
         return <View style={[styles.container, themeStyles.containerColorMain]}>
             <Svg>
                 < VictoryChart
+                    width={this.state.currentScreenDimension}
                     standalone={false}
                     padding={{ left: 0, top: 10, bottom: 0, right: 32 }}
                     domainPadding={{ x: [0, 5], y: [0, 40] }}
@@ -164,7 +211,8 @@ const styles = StyleSheet.create(
             alignItems: 'center',
             justifyContent: 'center',
             height: 300,
-            paddingBottom: 10
+            paddingBottom: 10,
+            marginRight: 20,
         }
     }
 );

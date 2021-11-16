@@ -1,5 +1,6 @@
 import { globals } from '@globals/globals';
 import { Profile } from '@types';
+import { Dimensions } from 'react-native';
 import { api } from './api/api';
 
 export function calculateDurationUntilNow(p_timeStampNanoSeconds: number): string {
@@ -81,4 +82,9 @@ export function generatePostHashHex(): string {
 export async function checkIsFollowedBack(publicKey: string): Promise<boolean> {
     const response = await api.checkFollowBack(publicKey, globals.user.publicKey).catch(() => { });
     return response.IsFollowing;
+}
+
+export function isPortrait(): boolean {
+    const dim = Dimensions.get('window');
+    return dim.height >= dim.width;
 }

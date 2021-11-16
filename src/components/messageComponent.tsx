@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { settingsGlobals } from '@globals';
 import { Message } from '@types';
 import { TextWithLinks } from './textWithLinks.component';
@@ -34,14 +34,14 @@ const styles = StyleSheet.create(
         },
         sentMessage: {
             marginRight: 4,
-            maxWidth: Dimensions.get('window').width * 0.8,
+            maxWidth: '80%',
             backgroundColor: 'black',
             marginLeft: 'auto',
             borderWidth: 1,
             borderColor: '#4a4a4a'
         },
         receivedMessage: {
-            maxWidth: Dimensions.get('window').width * 0.8,
+            maxWidth: '80%',
             marginLeft: 4,
             borderWidth: 1,
             borderColor: '#4a4a4a'

@@ -1,8 +1,9 @@
-import { ParamListBase, useNavigation } from '@react-navigation/core';
-import { StackNavigationProp } from '@react-navigation/stack';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { ParamListBase, useNavigation } from '@react-navigation/core';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { authenticateWithDeSoIdentity } from '@services/authorization/deSoAuthentication';
+import { LoginButton } from '@types';
 
 interface Props {
     onLoginWithUsername: () => void;
@@ -13,12 +14,10 @@ export function LoginOptions(props: Props): JSX.Element {
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
     const [isWorking, setIsWorking] = useState(false);
-    const isMounted = useRef(false);
+    const isMounted = useRef<boolean>(true);
 
     useEffect(
         () => {
-            isMounted.current = true;
-
             return () => {
                 isMounted.current = false;
             };
@@ -45,34 +44,39 @@ export function LoginOptions(props: Props): JSX.Element {
             color={'#ebebeb'} />;
     }
 
+    const buttons: LoginButton[] = [
+        {
+            label: 'Read-Only Mode',
+            title: 'Login with Username',
+            action: props.onLoginWithUsername
+        },
+        {
+            label: 'Full Access Mode',
+            title: 'Login with DeSo Identity',
+            action: loginWithDeSoIdentity
+        },
+        {
+            label: 'Full Access Mode',
+            title: 'Login with CloutFeed Identity',
+            action: () => navigation.navigate('Identity')
+        },
+    ];
+
     return <View style={styles.loginOptionsContainer}>
-        <Text style={styles.modeText}>Read-Only Mode</Text>
-        <TouchableOpacity
-            style={[styles.loginButton]}
-            onPress={() => props.onLoginWithUsername()}
-            activeOpacity={1}
-        >
-            <Text style={styles.loginButtonText}>Login with Username</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.modeText}>Full Access Mode</Text>
-        <TouchableOpacity
-            style={[styles.loginButton, { marginBottom: 10 }]}
-            onPress={() => loginWithDeSoIdentity()}
-            activeOpacity={1}
-        >
-            <Text style={styles.loginButtonText}>Login with DeSo Identity</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.modeText}>Full Access Mode</Text>
-        <TouchableOpacity
-            style={[styles.loginButton, { marginBottom: 10 }]}
-            onPress={() => navigation.navigate('Identity')}
-            activeOpacity={1}
-        >
-            <Text style={styles.loginButtonText}>Login with CloutFeed Identity</Text>
-        </TouchableOpacity>
-
+        {
+            buttons.map(
+                (button: LoginButton, index: number) => <View key={index} style={{ width: '100%', alignItems: 'center' }}>
+                    <Text style={styles.modeText}>{button.label}</Text>
+                    <TouchableOpacity
+                        style={styles.loginButton}
+                        onPress={button.action}
+                        activeOpacity={1}
+                    >
+                        <Text style={styles.loginButtonText}>{button.title}</Text>
+                    </TouchableOpacity>
+                </View>
+            )
+        }
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('IdentityInfo')}>
             <Text style={styles.modeText}>Read more</Text>
         </TouchableOpacity>
@@ -87,14 +91,16 @@ const styles = StyleSheet.create(
         loginButton: {
             backgroundColor: 'black',
             color: 'white',
-            alignSelf: 'stretch',
-            marginRight: 16,
-            marginLeft: 16,
-            height: 44,
+            width: '90%',
+            maxWidth: 330,
+            alignSelf: 'center',
+            marginHorizontal: 16,
+            height: 40,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 50,
-            marginBottom: 20,
+            marginBottom: 25,
+            paddingBottom: 2,
             borderWidth: 1,
             borderColor: '#404040'
         },
@@ -106,7 +112,8 @@ const styles = StyleSheet.create(
         loginOptionsContainer: {
             marginTop: 20,
             width: '100%',
-            justifyContent: 'center',
+            height: '40%',
+            justifyContent: 'space-evenly',
             alignItems: 'center'
         },
         modeText: {
@@ -115,8 +122,8 @@ const styles = StyleSheet.create(
             fontSize: 12
         },
         backButton: {
-            paddingLeft: 20,
-            paddingRight: 20
+            paddingHorizontal: 20,
+            marginBottom: 10,
         }
     }
 );

@@ -1,18 +1,16 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Linking } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Linking, Dimensions } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { ScrollView } from 'react-native-gesture-handler';
 import { NavigationProp } from '@react-navigation/core';
+import { globals } from '@globals/globals';
 
 interface Props {
     navigation: NavigationProp<any>;
 }
 
-interface State {
-
-}
-
-export class IdentityInfoScreen extends React.Component<Props, State> {
+const { height: screenHeight } = Dimensions.get('window');
+export class IdentityInfoScreen extends React.Component<Props> {
 
     constructor(props: Props) {
         super(props);
@@ -22,8 +20,8 @@ export class IdentityInfoScreen extends React.Component<Props, State> {
         return <View style={styles.container}>
             <FontAwesome name="lock" size={60} color="#ebebeb" />
             <Text style={styles.title}>CloutFeed Identity</Text>
-            <ScrollView style={styles.scrollView} bounces={false}>
-                <Text style={styles.infoText}>
+            <ScrollView contentContainerStyle={styles.scrollView} bounces={false}>
+                <Text style={[styles.infoText, globals.isDeviceTablet && { fontSize: 25 }]}>
                     <Text>
                         CloutFeed Identity exists to solve the security issues related to BitClout Identity especially on mobile devices. It adds more layers of security to ensure that your seed phrase is completely safe while using CloutFeed.
                     </Text>
@@ -70,31 +68,30 @@ const styles = StyleSheet.create(
     {
         container: {
             flex: 1,
-            paddingLeft: '10%',
-            paddingRight: '10%',
+            paddingHorizontal: '10%',
             paddingTop: '5%',
             alignItems: 'center',
             backgroundColor: '#121212',
+            paddingBottom: screenHeight * 0.08,
         },
         title: {
             fontSize: 28,
             fontWeight: '600',
             color: '#ebebeb',
             marginTop: 5,
-            marginBottom: 20
         },
         continueButton: {
             backgroundColor: 'black',
             color: 'white',
-            alignSelf: 'stretch',
             height: 44,
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 5,
             borderWidth: 1,
             borderColor: '#404040',
-            marginBottom: '20%',
-            marginTop: 'auto'
+            marginTop: 20,
+            width: '90%',
+            maxWidth: 500,
         },
         continueButtonText: {
             color: 'white',
@@ -102,10 +99,10 @@ const styles = StyleSheet.create(
             fontWeight: '500'
         },
         infoText: {
-            color: '#ebebeb'
+            color: '#ebebeb',
         },
         scrollView: {
-            marginBottom: 20
+            paddingVertical: 25
         }
     }
 );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { CreatorCoinTransaction, Profile } from '@types';
 import { themeStyles } from '@styles/globalColors';
 import { calculateDurationUntilNow, formatNumber, getAnonymousProfile } from '@services/helpers';
@@ -70,7 +70,6 @@ const styles = StyleSheet.create(
             paddingVertical: 16,
             paddingHorizontal: 10,
             borderBottomWidth: 1,
-            width: Dimensions.get('window').width,
             alignItems: 'center'
         },
         circleIcon: {
