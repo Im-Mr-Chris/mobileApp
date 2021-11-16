@@ -81,6 +81,7 @@ export class PostComponent extends React.Component<Props, State> {
             for (const imageUrl of this.props.post.ImageURLs) {
                 if (imageUrl.startsWith('https://images.bitclout.com/') ||
                     imageUrl.startsWith('https://arweave.net/') ||
+                    imageUrl.startsWith('https://images.deso.org/') ||
                     /^https:\/\/[\w-]+\.arweave\.net\//.test(imageUrl) ||
                     imageUrl.startsWith('https://cloudflare-ipfs.com/ipfs/')) {
                     imageUrls.push(imageUrl);
