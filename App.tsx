@@ -279,7 +279,7 @@ export default function App(): JSX.Element {
         const signatureKey = globals.user.publicKey + constants.localStorage_signatureEnabled;
         const isSignatureEnabled = await SecureStore.getItemAsync(signatureKey).catch(() => undefined);
 
-        globals.isSignatureEnabled = isSignatureEnabled === 'true';
+        globals.isSignatureEnabled = isSignatureEnabled == null || isSignatureEnabled === 'true';
         globals.areNFTsHidden = areNFTsHidden === 'true';
         globals.hiddenNFTType = type;
         globals.isCoinPriceHidden = isCoinPriceHidden === 'true';

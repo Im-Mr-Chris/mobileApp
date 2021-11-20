@@ -127,7 +127,7 @@ export class PreferencesScreen extends React.Component<Props, State>{
                 {
                     appearanceLabel: appearanceLabel,
                     isCloutCastEnabled: isCloutCastEnabledString === 'true',
-                    isSignatureEnabled: isSignatureEnabled === 'true',
+                    isSignatureEnabled: isSignatureEnabled == null || isSignatureEnabled === 'true',
                     areNFTsHidden: areNFTsHidden === 'true',
                     isCoinPriceHidden: isCoinPriceHidden === 'true',
                     feed: feed ? feed : FeedType.Global,
