@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dimensions, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Dimensions, StyleSheet, Text, View, Keyboard } from 'react-native';
 import { snackbar, SnackbarConfig, isNumber } from '@services';
 import { themeStyles } from '@styles';
 
@@ -9,6 +9,25 @@ export function SnackbarComponent(): JSX.Element {
     const [backgroundColor, setBackgroundColor] = useState('');
     const [textColor, setTextColor] = useState('');
     const [borderColor, setBorderColor] = useState('');
+    const [isKeyboardShown, setIsKeyboardShown] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    useEffect(() => {
+        const unsubscribeShowKeyboardEvent = Keyboard.addListener('keyboardDidShow', handleShowKeyboard);
+        const unsubscribeHideKeyboardEvent = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardShown(false));
+
+        return () => {
+            unsubscribeShowKeyboardEvent.remove;
+            unsubscribeHideKeyboardEvent.remove;
+        };
+    },
+        []
+    );
+
+    function handleShowKeyboard(e: any): void {
+        setKeyboardHeight(e.endCoordinates.height);
+        setIsKeyboardShown(true);
+    }
 
     snackbar.showSnackBar = (p_config: SnackbarConfig) => {
         setText(p_config.text);
@@ -38,8 +57,20 @@ export function SnackbarComponent(): JSX.Element {
         setTimeout(() => setShowSnackBar(false), duration);
     };
 
+    const snackbarPosition = isKeyboardShown ? { bottom: keyboardHeight + 20 } : { bottom: 50 };
+
     return showSnackBar ?
-        <View style={[styles.container, { backgroundColor: backgroundColor, borderColor: borderColor }]}>
+        <View style={
+            [
+                styles.container,
+                snackbarPosition,
+                {
+                    backgroundColor,
+                    borderColor
+                }
+            ]
+        }
+        >
             <Text style={{ color: textColor }}>{text}</Text>
         </View>
         :
@@ -52,14 +83,13 @@ const styles = StyleSheet.create(
             height: 50,
             width: Dimensions.get('window').width - 40,
             position: 'absolute',
-            backgroundColor: 'white',
-            bottom: 50,
             left: 20,
+            backgroundColor: 'white',
             borderRadius: 10,
             paddingLeft: 20,
             paddingRight: 20,
             justifyContent: 'center',
             borderWidth: 1
-        }
+        },
     }
 );

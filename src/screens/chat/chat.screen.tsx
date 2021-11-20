@@ -1,15 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Text, SectionList, Dimensions, KeyboardAvoidingView, Platform, Keyboard, TextInput, KeyboardEvent, ActivityIndicator } from 'react-native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
-import { ContactWithMessages, Message } from '@types';
+import { View, StyleSheet, Text, SectionList, Dimensions, KeyboardAvoidingView, Platform, Keyboard, KeyboardEvent, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { ContactWithMessages, EventType, Message } from '@types';
 import { MessageComponent } from '@components/messageComponent';
-import { globals, settingsGlobals } from '@globals';
+import { eventManager, globals } from '@globals';
 import { api, getMessageText } from '@services';
 import { themeStyles } from '@styles';
 import { signing } from '@services/authorization/signing';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { RouteProp } from '@react-navigation/native';
+import ChatInputComponent from './chatInput.component';
+import { EvilIcons } from '@expo/vector-icons';
 
 interface Section {
     date: string;
@@ -27,6 +27,8 @@ interface Props {
     route: RouteProp<RouteParams, 'Chat'>
 }
 
+const { height: screenHeight } = Dimensions.get('screen');
+
 export function ChatScreen({ route }: Props) {
 
     const [isLoading, setLoading] = useState<boolean>(true);
@@ -38,12 +40,14 @@ export function ChatScreen({ route }: Props) {
     const [messageText, setMessageText] = useState<string>('');
     const [paddingTop, setPaddingTop] = useState<number>(0);
     const [isKeyboardAvoidingViewEnabled, setIsKeyboardAvoidingViewEnabled] = useState<boolean>(true);
+    const [showScrollIcon, setShowScrollIcon] = useState(false);
+    const [isScrollIconLocked, setIsScrollIconLocked] = useState(false);
 
     const sectionListRef: React.RefObject<SectionList> = useRef(null);
     const lastVisitedIndex = useRef<number>(15);
     const isMounted = useRef<boolean>(true);
+    const currentScrollOffsetY = useRef<number>(0);
     const contactWithMessagesRef = useRef<ContactWithMessages>({} as ContactWithMessages);
-
     useEffect(
         () => {
             const loadMessages = route.params?.loadMessages;
@@ -84,19 +88,6 @@ export function ChatScreen({ route }: Props) {
         []
     );
 
-    useEffect(
-        () => {
-            if (paddingTop !== 0) {
-                scrollToBottom(false);
-            }
-
-            return () => {
-                isMounted.current = false;
-            };
-        },
-        [paddingTop]
-    );
-
     const keyboardWillShow = (event: KeyboardEvent): void => {
         setPaddingTop(event.endCoordinates.height - 25);
     };
@@ -105,10 +96,11 @@ export function ChatScreen({ route }: Props) {
         setPaddingTop(0);
     };
 
-    function initializeSections(contactWithMessages: ContactWithMessages): void {
-        const groupedMessages = groupMessagesByDay(contactWithMessages);
+    async function initializeSections(contactWithMessages: ContactWithMessages, slicedContacts?: ContactWithMessages) {
+        const newSections: Section[] = sections;
+        const targetContacts = newSections.length === 0 ? contactWithMessages : slicedContacts;
+        const groupedMessages = groupMessagesByDay(targetContacts as ContactWithMessages);
         const keys = Object.keys(groupedMessages);
-        const newSections: Section[] = [];
 
         for (const key of keys) {
             const messages = groupedMessages[key];
@@ -117,25 +109,39 @@ export function ChatScreen({ route }: Props) {
                 date: key,
                 data: messages
             };
-
-            for (let i = 0; i < messages.length; i++) {
-                if (i === messages.length - 1 || messages[i].IsSender !== messages[i + 1].IsSender) {
-                    messages[i].LastOfGroup = true;
+            await handleMessagesDecryption(section);
+            const dataFound = newSections.find((section: Section) => section.date === key);
+            const targetSection = dataFound ? dataFound.data : messages;
+            for (let i = 0; i < targetSection.length; i++) {
+                if (i === 0 || (targetSection[i]?.IsSender !== targetSection[i - 1]?.IsSender)) {
+                    targetSection[i].LastOfGroup = true;
+                } else {
+                    targetSection[i].LastOfGroup = false;
                 }
             }
-            newSections.push(section);
+
+            if (dataFound) {
+                dataFound.data.push(...section.data);
+            }
+            else {
+                newSections.push(section);
+            }
+
         }
-        handleMessagesDecryption(newSections);
+
+        setSections(newSections);
+        setLoading(false);
+        setIsLoadingMore(false);
     }
 
     function renderMessages(contactWithMessages: ContactWithMessages): void {
         const contactWithMessagesCopy = JSON.parse(JSON.stringify(contactWithMessages));
         contactWithMessagesRef.current = contactWithMessages;
-        const batchSize = 15;
         const messagesCount = contactWithMessages.Messages.length;
-        lastVisitedIndex.current = messagesCount - batchSize;
+        const initialBatch = 30;
+        lastVisitedIndex.current = messagesCount - initialBatch;
         let slicedMessages = contactWithMessagesCopy.Messages.slice(lastVisitedIndex.current);
-        if (batchSize > messagesCount) {
+        if (initialBatch > messagesCount) {
             slicedMessages = contactWithMessagesCopy.Messages;
             setIsKeyboardAvoidingViewEnabled(false);
             setNoMoreMessages(true);
@@ -152,8 +158,9 @@ export function ChatScreen({ route }: Props) {
         if (isMounted) {
             setIsLoadingMore(true);
         }
+        const batchSize = 10;
         const contactWithMessages = JSON.parse(JSON.stringify(contactWithMessagesState));
-        const batchSize = 15;
+        const decryptionTarget = JSON.parse(JSON.stringify(contactWithMessagesState));
         const startIndex = Math.max(lastVisitedIndex.current - batchSize, 0);
         const slicedMessages = contactWithMessagesRef.current.Messages.slice(startIndex, lastVisitedIndex.current);
         if (startIndex === 0) {
@@ -161,38 +168,30 @@ export function ChatScreen({ route }: Props) {
         }
         lastVisitedIndex.current = startIndex;
         contactWithMessages.Messages = slicedMessages.concat(contactWithMessages.Messages);
+        decryptionTarget.Messages = slicedMessages;
         setContactWithMessagesState(contactWithMessages);
-        initializeSections(contactWithMessages);
+        initializeSections(contactWithMessages, decryptionTarget);
     }
 
-    async function handleMessagesDecryption(sections: Section[]): Promise<void> {
+    async function handleMessagesDecryption(section: Section): Promise<void> {
         let decryptedMessages: string[] = [];
         const promises: Promise<Message | undefined>[] = [];
-        for (const section of sections) {
-            for (const message of section.data) {
-                const promise = new Promise<Message | undefined>(
-                    (p_resolve) => {
-                        getMessageText(message).then(
-                            (response: any) => {
-                                p_resolve(response);
-                            }
-                        ).catch(() => p_resolve(undefined));
-                    }
-                );
-                promises.push(promise);
-            }
+        for (const message of section.data) {
+            const promise = new Promise<Message | undefined>(
+                (p_resolve) => {
+                    getMessageText(message).then(
+                        (response: any) => {
+                            p_resolve(response);
+                        }
+                    ).catch(() => p_resolve(undefined));
+                }
+            );
+            promises.push(promise);
         }
         decryptedMessages = await Promise.all(promises) as any;
-        let i, j, k = 0;
-        for (i = 0; i < sections.length; i++) {
-            for (j = 0; j < sections[i].data.length; j++) {
-                sections[i].data[j].DecryptedText = decryptedMessages[k];
-                k++;
-            }
+        for (let j = 0; j < section.data.length; j++) {
+            section.data[j].DecryptedText = decryptedMessages[j];
         }
-        setSections(sections);
-        setLoading(false);
-        setIsLoadingMore(false);
     }
 
     function groupMessagesByDay(contactWithMessages: ContactWithMessages): { [key: string]: Message[] } {
@@ -224,9 +223,11 @@ export function ChatScreen({ route }: Props) {
     }
 
     async function onSendMessage(): Promise<void> {
+        if (messageText.trim().length === 0) {
+            return;
+        }
         const contactWithMessages = route.params?.contactWithMessages;
         const timeStampNanos = new Date().getTime() * 1000000;
-
         const message: Message = {
             DecryptedText: messageText,
             EncryptedText: '',
@@ -248,7 +249,7 @@ export function ChatScreen({ route }: Props) {
         }
 
         if (todaySection.data.length > 0) {
-            const lastMessage: Message = todaySection.data[todaySection.data.length - 1];
+            const lastMessage: Message = todaySection.data[0];
             if (lastMessage.IsSender) {
                 lastMessage.LastOfGroup = false;
             }
@@ -257,8 +258,11 @@ export function ChatScreen({ route }: Props) {
         }
 
         todaySection.data.unshift(message);
-        const Messages = [...contactWithMessagesState.Messages, message];
+        const Messages = [...contactWithMessagesRef.current.Messages, message];
+        contactWithMessagesRef.current.Messages.unshift(message);
         setContactWithMessagesState((prevState) => ({ ...prevState, Messages }));
+        eventManager.dispatchEvent(EventType.UpdateContactsWithMessages, { message });
+        setMessageText('');
 
         if (sections.length === 0) {
             const newSection = [
@@ -271,10 +275,9 @@ export function ChatScreen({ route }: Props) {
         } else {
             setSections(sections);
         }
-
+        scrollToBottom();
         try {
             const encryptedMessage = await signing.encryptShared(contactWithMessages.PublicKeyBase58Check, messageText);
-            setMessageText('');
             const response = await api.sendMessage(globals.user.publicKey, contactWithMessages.PublicKeyBase58Check, encryptedMessage);
             const transactionHex = response.TransactionHex;
             const signedTransactionHex = await signing.signTransaction(transactionHex);
@@ -284,9 +287,26 @@ export function ChatScreen({ route }: Props) {
         }
     }
 
-    function scrollToBottom(animated: boolean): void {
+    function scrollToBottom(): void {
         if (sectionListRef?.current && sections?.length > 0 && isKeyboardAvoidingViewEnabled) {
-            sectionListRef.current.scrollToLocation({ itemIndex: 0, sectionIndex: 0, animated });
+            setShowScrollIcon(false);
+            setIsScrollIconLocked(true);
+            sectionListRef.current.scrollToLocation({ itemIndex: 0, sectionIndex: 0, animated: true });
+        }
+    }
+
+    function onScroll(event: any) {
+        const scrollOffset = event.nativeEvent.contentOffset.y;
+        currentScrollOffsetY.current = scrollOffset;
+        if (isMounted.current) {
+            if (scrollOffset < 10) {
+                setIsScrollIconLocked(false);
+            }
+            if (scrollOffset > screenHeight * 0.6 && !isScrollIconLocked) {
+                setShowScrollIcon(true);
+            } else {
+                setShowScrollIcon(false);
+            }
         }
     }
 
@@ -295,66 +315,64 @@ export function ChatScreen({ route }: Props) {
         <MessageComponent message={item} />
     </View>;
 
-    const renderSectionDate = ({ section: { date } }: any): JSX.Element => <View style={[styles.dateContainer, themeStyles.chipColor]}>
-        <Text style={[styles.dateText, themeStyles.fontColorMain]}>{date}</Text>
-    </View>;
-
+    const renderSectionDate = ({ section: { date } }: any): JSX.Element => <Text style={[styles.dateText, themeStyles.fontColorSub]}>{date}</Text>;
     const renderFooter = isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : <></>;
-    const keyboardBehavior = Platform.OS === 'ios' ? 'position' : 'height';
-
+    const keyboardBehavior = Platform.OS === 'ios' ? 'position' : undefined;
+    const keyboardVerticalOffset = Platform.OS === 'ios' ? 100 : 0;
     return isLoading ?
         <CloutFeedLoader />
         :
-        <KeyboardAvoidingView
-            behavior={keyboardBehavior}
-            keyboardVerticalOffset={65}
-        >
-            <View style={[styles.container, { paddingTop: paddingTop }]}>
-                <SectionList
-                    inverted
-                    style={{ transform: [{ scaleY: -1 }] }}
-                    contentContainerStyle={styles.flatListStyle}
-                    ref={sectionListRef}
-                    onScrollToIndexFailed={() => { undefined; }}
-                    showsVerticalScrollIndicator={false}
-                    initialNumToRender={5}
-                    invertStickyHeaders={false}
-                    onEndReachedThreshold={0.01}
-                    onEndReached={loadMoreMessages}
-                    ListFooterComponent={renderFooter}
-                    sections={sections}
-                    keyExtractor={keyExtractor}
-                    renderItem={renderItem}
-                    renderSectionFooter={renderSectionDate}
-                />
-                <View style={[styles.textInputContainer, { height: textInputHeight + 45 }]}>
-                    <TextInput
-                        style={[styles.textInput, { height: textInputHeight }]}
-                        onContentSizeChange={(event) => {
-                            if (isMounted) {
-                                setTextInputHeight(
-                                    Math.max(Math.min(event.nativeEvent.contentSize.height, 100), 35)
-                                );
-                            }
-                        }}
-                        onFocus={() => scrollToBottom(true)}
-                        onChangeText={setMessageText}
-                        value={messageText}
-                        blurOnSubmit={false}
-                        multiline={true}
-                        maxLength={1000}
-                        placeholder={'Type a message'}
-                        placeholderTextColor={'rgba(241,241,242,0.43)'}
-                        keyboardAppearance={settingsGlobals.darkMode ? 'dark' : 'light'}
-                    >
-                    </TextInput>
+        <View style={[{ flex: 1, paddingBottom: 30 }, themeStyles.containerColorMain]} >
+            <KeyboardAvoidingView
+                behavior={keyboardBehavior}
+                style={[{ flex: 1 }, themeStyles.containerColorMain]}
+                keyboardVerticalOffset={keyboardVerticalOffset}
+            >
+                <View style={[styles.container, { paddingTop }]}>
+                    <SectionList
+                        inverted
+                        onScroll={onScroll}
+                        style={{ transform: [{ scaleY: -1 }] }}
+                        contentContainerStyle={styles.flatListStyle}
+                        ref={sectionListRef}
+                        onScrollToIndexFailed={() => { undefined; }}
+                        showsVerticalScrollIndicator={false}
+                        initialNumToRender={5}
+                        invertStickyHeaders={false}
+                        onEndReachedThreshold={3}
+                        onEndReached={loadMoreMessages}
+                        ListFooterComponent={renderFooter}
+                        sections={sections}
+                        keyExtractor={keyExtractor}
+                        renderItem={renderItem}
+                        renderSectionFooter={renderSectionDate}
+                    />
+                    <ChatInputComponent
+                        messageText={messageText}
+                        setMessageText={setMessageText}
+                        textInputHeight={textInputHeight}
+                        setTextInputHeight={setTextInputHeight}
+                        onSendMessage={onSendMessage}
+                    />
 
-                    <TouchableOpacity style={styles.sendButton} onPress={onSendMessage}>
-                        <Ionicons name="send" size={32} color="rgba(241,241,242,0.43)" />
-                    </TouchableOpacity>
+                    {
+                        showScrollIcon && <TouchableOpacity
+                            onPress={scrollToBottom}
+                            activeOpacity={1}
+                            style={
+                                [
+                                    styles.floatingArrow,
+                                    { bottom: textInputHeight + 60 },
+                                    themeStyles.containerColorSub
+                                ]
+                            }>
+                            <EvilIcons name="arrow-down" size={30} color={themeStyles.verificationBadgeBackgroundColor.backgroundColor} />
+                        </TouchableOpacity>
+                    }
+
                 </View>
-            </View>
-        </KeyboardAvoidingView>;
+            </KeyboardAvoidingView>
+        </View>;
 }
 
 const styles = StyleSheet.create(
@@ -370,41 +388,21 @@ const styles = StyleSheet.create(
             paddingTop: 5,
             paddingBottom: 10,
         },
-        dateContainer: {
-            alignSelf: 'center',
-            borderRadius: 8,
-            paddingVertical: 2,
-            paddingHorizontal: 6,
-            marginVertical: 4,
-            borderWidth: 1,
-            borderColor: 'black'
-        },
         dateText: {
-            fontSize: 10,
-            fontWeight: '700'
+            marginVertical: 12,
+            fontSize: 11,
+            fontWeight: '700',
+            textAlign: 'center'
         },
-        textInputContainer: {
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            paddingBottom: 36,
-            paddingTop: 8,
-            backgroundColor: settingsGlobals.darkMode ?
-                themeStyles.containerColorMain.backgroundColor : '#1e2428'
-        },
-        textInput: {
-            minHeight: 35,
-            borderRadius: 25,
-            marginLeft: 6,
-            marginRight: 12,
-            paddingHorizontal: 10,
-            color: 'white',
-            flex: 1,
-            fontSize: 16,
-            backgroundColor: settingsGlobals.darkMode ?
-                themeStyles.containerColorSub.backgroundColor : '#33383b'
-        },
-        sendButton: {
-            marginRight: 5
-        },
+        floatingArrow: {
+            position: 'absolute',
+            bottom: 15,
+            right: 0,
+            width: 50,
+            height: 35,
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderRadius: 8
+        }
     }
 );

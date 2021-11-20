@@ -10,7 +10,7 @@ import MessageInfoCardComponent from '@components/profileInfo/messageInfoCard.co
 import { StackNavigationProp } from '@react-navigation/stack';
 
 export function ContactMessagesListCardComponent(
-    { contactWithMessages }: { contactWithMessages: ContactWithMessages }
+    { contactWithMessages, index }: { contactWithMessages: ContactWithMessages, index: number }
 ): JSX.Element {
     const [showCreatorCoinHolding, setShowCreatorCoinHolding] = useState<boolean>(false);
     const [unreadMessages, setUnreadMessages] = useState<boolean>(false);
@@ -48,6 +48,7 @@ export function ContactMessagesListCardComponent(
             {
                 screen: 'Chat',
                 params: {
+                    contactIndex: index,
                     contactWithMessages: contactWithMessages
                 }
             }

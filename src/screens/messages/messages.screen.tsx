@@ -2,7 +2,7 @@ import React from 'react';
 import { eventManager } from '@globals/injector';
 import { themeStyles } from '@styles/globalColors';
 import { View, StyleSheet, FlatList, RefreshControl, ActivityIndicator, Text, SafeAreaView } from 'react-native';
-import { ContactWithMessages, EventType, Message, MessageFilter, MessageSort } from '@types';
+import { ContactWithMessages, EventType, Message, MessageFilter, MessageSort, RefreshContactWithMessagesEvent, UpdateContactsWithMessagesEvent } from '@types';
 import { MessageSettingsComponent } from './components/messageSettings';
 import * as SecureStore from 'expo-secure-store';
 import { constants } from '@globals/constants';
@@ -12,6 +12,12 @@ import { getAnonymousProfile } from '@services';
 import { ContactMessagesListCardComponent } from '@screens/messages/components/contactMessagesListCard.component';
 import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { messagesService } from '@services/messagesServices';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ParamListBase } from '@react-navigation/routers';
+
+interface Props {
+    navigation: StackNavigationProp<ParamListBase>;
+}
 
 interface State {
     isLoading: boolean;
@@ -24,13 +30,13 @@ interface State {
     noMoreMessages: boolean;
 }
 
-export class MessagesScreen extends React.Component<Record<string, never>, State>{
+export class MessagesScreen extends React.Component<Props, State>{
 
     private _isMounted = false;
 
     private _subscriptions: (() => void)[] = [];
 
-    constructor(props: Record<string, never>) {
+    constructor(props: Props) {
         super(props);
 
         this.state = {
@@ -47,15 +53,16 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
         messagesService.getMessageSettings().then(
             ({ messagesFilter, messagesSort }) => {
                 this.loadMessages(messagesFilter, messagesSort);
-
                 if (this._isMounted) {
                     this.setState({ messagesFilter, messagesSort });
                 }
             }
-        );
+        ).catch(() => { });
 
         this._subscriptions.push(
-            eventManager.addEventListener(EventType.OpenMessagesSettings, this.toggleMessagesFilter.bind(this))
+            eventManager.addEventListener(EventType.OpenMessagesSettings, this.toggleMessagesFilter.bind(this)),
+            eventManager.addEventListener(EventType.UpdateContactsWithMessages, this.updateContacts.bind(this)),
+            eventManager.addEventListener(EventType.RefreshContactsWithMessages, this.refreshContacts.bind(this))
         );
 
         this.loadMessages = this.loadMessages.bind(this);
@@ -78,10 +85,35 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
         this._isMounted = false;
     }
 
-    shouldComponentUpdate(_nextProps: Record<string, never>, nextState: State): boolean {
-        return nextState.isFilterShown !== this.state.isFilterShown ||
-            nextState.isLoading !== this.state.isLoading ||
-            nextState.isLoadingMore !== this.state.isLoadingMore;
+    private refreshContacts(event: RefreshContactWithMessagesEvent) {
+        const filteredContacts = this.state.contacts.filter((_contact: ContactWithMessages, index: number) => event.contactIndex !== index);
+        if (this._isMounted) {
+            this.setState({ contacts: [...filteredContacts] });
+        }
+    }
+
+    private updateContacts(event: UpdateContactsWithMessagesEvent): void {
+        const contacts = this.state.contacts;
+        const lastMessage = event.message;
+
+        let fromIndex = 0;
+        let lastUpdated: ContactWithMessages | null = null;
+        for (let i = 0; i < this.state.contacts.length; i++) {
+            if (this.state.contacts[i].ProfileEntryResponse?.PublicKeyBase58Check === lastMessage?.RecipientPublicKeyBase58Check) {
+                lastUpdated = contacts[i];
+                contacts[i].Messages.push(lastMessage);
+                contacts[i].LastDecryptedMessage = lastMessage.DecryptedText;
+                fromIndex = i;
+            }
+        }
+
+        if (lastUpdated) {
+            contacts.splice(fromIndex, 1);
+            contacts.splice(0, 0, lastUpdated);
+        }
+        if (this._isMounted) {
+            this.setState({ contacts });
+        }
     }
 
     private loadMessages(messageFilter: MessageFilter[], messageSort: MessageSort): void {
@@ -102,7 +134,7 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
                     );
                 }
             }
-        );
+        ).catch(() => { });
     }
 
     private loadMoreMessages(messageFilter: MessageFilter[], messageSort: MessageSort): void {
@@ -129,7 +161,7 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
                     );
                 }
             }
-        );
+        ).catch(() => { });
     }
 
     private async handleDecryptLastMessage(message: Message): Promise<string | undefined> {
@@ -149,7 +181,6 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
                 contactWithMessages.ProfileEntryResponse.ProfilePic = api.getSingleProfileImage(contactWithMessages.PublicKeyBase58Check);
             }
             try {
-
                 const lastMessage = contactWithMessages.Messages[contactWithMessages.Messages.length - 1];
                 const response = await this.handleDecryptLastMessage(lastMessage);
                 contactWithMessages.LastDecryptedMessage = response;
@@ -197,7 +228,7 @@ export class MessagesScreen extends React.Component<Record<string, never>, State
             onRefresh={() => this.loadMessages(this.state.messagesFilter, this.state.messagesSort)}
         />;
         const keyExtractor = (item: ContactWithMessages, index: number): string => item.PublicKeyBase58Check + index.toString();
-        const renderItem = ({ item }: { item: ContactWithMessages }): JSX.Element => <ContactMessagesListCardComponent contactWithMessages={item} />;
+        const renderItem = ({ item, index }: { item: ContactWithMessages, index: number }): JSX.Element => <ContactMessagesListCardComponent index={index} contactWithMessages={item} />;
         const renderFooter = this.state.isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : <></>;
         if (globals.readonly) {
             return <View style={[styles.infoMessageContainer, styles.container, themeStyles.containerColorSub]}>

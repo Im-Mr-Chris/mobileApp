@@ -76,7 +76,7 @@ export default function MessageStackScreen() {
                         headerBackTitle: ' ',
                         headerLeft: () => (
                             route.params &&
-                            <ChatHeaderComponent contactWithMessages={(route.params as any).contactWithMessages} />
+                            <ChatHeaderComponent contactIndex={(route.params as any).contactIndex} contactWithMessages={(route.params as any).contactWithMessages} />
                         )
                     }
                 )}

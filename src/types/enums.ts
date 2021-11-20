@@ -18,7 +18,9 @@ export enum EventType {
     BroadcastMessage = 16,
     ToggleHideNFTs = 17,
     ToggleRefreshDraftPosts = 18,
-    ToggleHideCoinPrice = 19
+    ToggleHideCoinPrice = 19,
+    UpdateContactsWithMessages = 20,
+    RefreshContactsWithMessages = 21
 }
 
 export enum DiscoveryType {

@@ -7,6 +7,11 @@ export function calculateDurationUntilNow(p_timeStampNanoSeconds: number): strin
     const milliseconds = p_timeStampNanoSeconds / 1000000;
     const durationUntilNowInMilliseconds = new Date().getTime() - milliseconds;
     const durationInMinutes = durationUntilNowInMilliseconds / 1000 / 60;
+    const durationInSeconds = durationInMinutes * 60;
+
+    if (durationInSeconds < 60) {
+        return Math.floor(durationInSeconds) + 's';
+    }
 
     if (durationInMinutes < 60) {
         return Math.floor(durationInMinutes) + 'm';
@@ -21,6 +26,16 @@ export function calculateDurationUntilNow(p_timeStampNanoSeconds: number): strin
     const durationInDays = durationInHours / 24;
 
     return Math.floor(durationInDays) + 'd';
+}
+
+export function getCurrentTime(timeStampNanoSeconds: number): string {
+    const milliseconds = timeStampNanoSeconds / 1000000;
+    const date = new Date(milliseconds);
+    let hours: string | number = date.getHours() > 12 ? date.getHours() - 12 : date.getHours();
+    hours = hours < 10 ? '0' + hours : hours;
+    const am_pm = date.getHours() >= 12 ? 'PM' : 'AM';
+    const minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes();
+    return `${hours}:${minutes} ${am_pm}`;
 }
 
 export function getAnonymousProfile(p_publicKey: string) {
