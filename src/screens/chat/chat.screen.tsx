@@ -260,7 +260,6 @@ export function ChatScreen({ route }: Props) {
 
         todaySection.data.unshift(message);
         const Messages = [...contactWithMessagesRef.current.Messages, message];
-        contactWithMessagesRef.current.Messages.unshift(message);
         setContactWithMessagesState((prevState) => ({ ...prevState, Messages }));
         eventManager.dispatchEvent(EventType.UpdateContactsWithMessages, { message });
         setMessageText('');
@@ -276,7 +275,9 @@ export function ChatScreen({ route }: Props) {
         } else {
             setSections(sections);
         }
-        scrollToBottom();
+        if (sections.length > 0) {
+            scrollToBottom();
+        }
         try {
             const encryptedMessage = await signing.encryptShared(contactWithMessages.PublicKeyBase58Check, messageText);
             const response = await api.sendMessage(globals.user.publicKey, contactWithMessages.PublicKeyBase58Check, encryptedMessage);
@@ -292,7 +293,9 @@ export function ChatScreen({ route }: Props) {
         if (sectionListRef?.current && sections?.length > 0) {
             setShowScrollIcon(false);
             setIsScrollIconLocked(true);
-            sectionListRef.current.scrollToLocation({ itemIndex: 0, sectionIndex: 0, animated: true });
+            try {
+                sectionListRef.current.scrollToLocation({ itemIndex: 0, sectionIndex: 0, animated: true });
+            } catch { }
         }
     }
 

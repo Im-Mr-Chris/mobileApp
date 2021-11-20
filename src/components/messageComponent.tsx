@@ -9,6 +9,7 @@ import { themeStyles } from '@styles/globalColors';
 import { snackbar } from '@services/snackbar';
 import { settingsGlobals } from '@globals/settingsGlobals';
 import { calculateDurationUntilNow, getCurrentTime } from '@services/helpers';
+import { globals } from '@globals/globals';
 
 export function MessageComponent(
     { message }: { message: Message }
@@ -55,7 +56,7 @@ export function MessageComponent(
     const messageContainerStyleType = message.IsSender ? [styles.rightArrowContainer, themeStyles.verificationBadgeBackgroundColor] : [styles.leftArrowContainer, { backgroundColor: leftArrowBackgroundColor }];
     const color = message.IsSender ? 'white' : themeStyles.fontColorMain.color;
     const currentTimeColor = message.IsSender ? 'rgba(255,255,255,0.65)' : themeStyles.fontColorSub.color;
-
+    const wordsLength = globals.isDeviceTablet ? 80 : 30;
     return <Animated.View
         style={
             [
@@ -76,7 +77,7 @@ export function MessageComponent(
             <TextWithLinks
                 style={
                     [
-                        decryptedMessage.length < 25 && { marginRight: 50 },
+                        decryptedMessage.length < wordsLength && { marginRight: 50 },
                         styles.messageText,
                         { color },
                         isEmoji && styles.emojiStyle

@@ -6,6 +6,7 @@ import * as FileSystem from 'expo-file-system';
 import * as MediaLibrary from 'expo-media-library';
 import { themeStyles } from '@styles/globalColors';
 import * as ImageManipulator from 'expo-image-manipulator';
+import Constants from 'expo-constants';
 
 interface Props {
     closeModal: () => void;
@@ -163,11 +164,11 @@ const styles = StyleSheet.create(
             flex: 1,
         },
         header: {
-            flex: 1,
             flexDirection: 'row',
+            alignItems: 'center',
             justifyContent: 'space-between',
             zIndex: 20,
-            marginTop: Platform.OS === 'ios' ? 30 : 0
+            marginTop: Platform.OS === 'ios' ? Constants.statusBarHeight : 0
         },
         modalView: {
             width: '100%',
