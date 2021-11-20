@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Alert, Dimensions, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Keyboard, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ParamListBase, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { themeStyles } from '@styles';
@@ -21,6 +21,7 @@ export function ChatHeaderComponent(
     const navigation = useNavigation<StackNavigationProp<ParamListBase>>();
 
     const [currentScreenDimension, setCurrentScreenDimension] = useState(screenWidth);
+    const [isKeyboardShown, setIsKeyboardShown] = useState(false);
 
     const isInitiallyPortrait = useRef<boolean>(true);
 
@@ -36,6 +37,14 @@ export function ChatHeaderComponent(
                     }
                 );
             }
+
+            const unsubscribeShowKeyboardEvent = Keyboard.addListener('keyboardDidShow', () => setIsKeyboardShown(true));
+            const unsubscribeHideKeyboardEvent = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardShown(false));
+
+            return () => {
+                unsubscribeShowKeyboardEvent.remove();
+                unsubscribeHideKeyboardEvent.remove();
+            };
         },
         []
     );
@@ -94,23 +103,33 @@ export function ChatHeaderComponent(
     }
 
     function toggleActionSheet(): void {
-        const options = ['Copy Public Key', 'Block User', 'Cancel'];
-        const callback = (p_optionIndex: number) => {
-            switch (p_optionIndex) {
-                case 0:
-                    handleCopyPublicKey();
-                    break;
-                case 1:
-                    setTimeout(handleBlockUserAlert, 1);
-                    break;
-            }
-        };
-        eventManager.dispatchEvent(
-            EventType.ToggleActionSheet,
-            {
-                visible: true,
-                config: { options, callback, destructiveButtonIndex: [1] }
-            }
+        const timeout = isKeyboardShown ? 500 : 0;
+        if (isKeyboardShown) {
+            Keyboard.dismiss();
+        }
+
+        setTimeout(
+            () => {
+                const options = ['Copy Public Key', 'Block User', 'Cancel'];
+                const callback = (p_optionIndex: number) => {
+                    switch (p_optionIndex) {
+                        case 0:
+                            handleCopyPublicKey();
+                            break;
+                        case 1:
+                            setTimeout(handleBlockUserAlert, 1);
+                            break;
+                    }
+                };
+                eventManager.dispatchEvent(
+                    EventType.ToggleActionSheet,
+                    {
+                        visible: true,
+                        config: { options, callback, destructiveButtonIndex: [1] }
+                    }
+                );
+            },
+            timeout
         );
     }
 

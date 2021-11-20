@@ -35,7 +35,6 @@ export default function ChatInputComponent({ messageText, setMessageText, setTex
             setHeight(height);
             setTextInputHeight(height);
         }
-
     }
 
     return <View style={[styles.textInputContainer]}>
@@ -83,7 +82,7 @@ const styles = StyleSheet.create(
             justifyContent: 'space-between',
             alignItems: 'center',
             paddingHorizontal: 10,
-            marginTop: 5,
+            marginTop: 2,
             backgroundColor: 'transparent',
             overflow: 'hidden',
         },

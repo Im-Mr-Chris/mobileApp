@@ -10,6 +10,7 @@ import CloutFeedLoader from '@components/loader/cloutFeedLoader.component';
 import { RouteProp } from '@react-navigation/native';
 import ChatInputComponent from './chatInput.component';
 import { EvilIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Section {
     date: string;
@@ -39,9 +40,9 @@ export function ChatScreen({ route }: Props) {
     const [textInputHeight, setTextInputHeight] = useState<number>(35);
     const [messageText, setMessageText] = useState<string>('');
     const [paddingTop, setPaddingTop] = useState<number>(0);
-    const [isKeyboardAvoidingViewEnabled, setIsKeyboardAvoidingViewEnabled] = useState<boolean>(true);
     const [showScrollIcon, setShowScrollIcon] = useState(false);
     const [isScrollIconLocked, setIsScrollIconLocked] = useState(false);
+    const insets = useSafeAreaInsets();
 
     const sectionListRef: React.RefObject<SectionList> = useRef(null);
     const lastVisitedIndex = useRef<number>(15);
@@ -77,6 +78,7 @@ export function ChatScreen({ route }: Props) {
             } else {
                 renderMessages(contactWithMessages);
             }
+
             const unsubscribeShowKeyboard = Keyboard.addListener('keyboardWillShow', keyboardWillShow);
             const unsubscribeHideKeyboard = Keyboard.addListener('keyboardWillHide', keyboardWillHide);
             return () => {
@@ -143,7 +145,6 @@ export function ChatScreen({ route }: Props) {
         let slicedMessages = contactWithMessagesCopy.Messages.slice(lastVisitedIndex.current);
         if (initialBatch > messagesCount) {
             slicedMessages = contactWithMessagesCopy.Messages;
-            setIsKeyboardAvoidingViewEnabled(false);
             setNoMoreMessages(true);
         }
         contactWithMessagesCopy.Messages = slicedMessages;
@@ -288,7 +289,7 @@ export function ChatScreen({ route }: Props) {
     }
 
     function scrollToBottom(): void {
-        if (sectionListRef?.current && sections?.length > 0 && isKeyboardAvoidingViewEnabled) {
+        if (sectionListRef?.current && sections?.length > 0) {
             setShowScrollIcon(false);
             setIsScrollIconLocked(true);
             sectionListRef.current.scrollToLocation({ itemIndex: 0, sectionIndex: 0, animated: true });
@@ -318,11 +319,12 @@ export function ChatScreen({ route }: Props) {
     const renderSectionDate = ({ section: { date } }: any): JSX.Element => <Text style={[styles.dateText, themeStyles.fontColorSub]}>{date}</Text>;
     const renderFooter = isLoadingMore ? <ActivityIndicator color={themeStyles.fontColorMain.color} /> : <></>;
     const keyboardBehavior = Platform.OS === 'ios' ? 'position' : undefined;
-    const keyboardVerticalOffset = Platform.OS === 'ios' ? 100 : 0;
+    const keyboardVerticalOffset = Platform.OS === 'ios' ? 70 + insets.bottom : 0;
+
     return isLoading ?
         <CloutFeedLoader />
         :
-        <View style={[{ flex: 1, paddingBottom: 30 }, themeStyles.containerColorMain]} >
+        <View style={[{ flex: 1, paddingBottom: insets.bottom + 12 }, themeStyles.containerColorMain]} >
             <KeyboardAvoidingView
                 behavior={keyboardBehavior}
                 style={[{ flex: 1 }, themeStyles.containerColorMain]}
@@ -372,7 +374,7 @@ export function ChatScreen({ route }: Props) {
 
                 </View>
             </KeyboardAvoidingView>
-        </View>;
+        </View >;
 }
 
 const styles = StyleSheet.create(

@@ -17,8 +17,8 @@ export function SnackbarComponent(): JSX.Element {
         const unsubscribeHideKeyboardEvent = Keyboard.addListener('keyboardDidHide', () => setIsKeyboardShown(false));
 
         return () => {
-            unsubscribeShowKeyboardEvent.remove;
-            unsubscribeHideKeyboardEvent.remove;
+            unsubscribeShowKeyboardEvent.remove();
+            unsubscribeHideKeyboardEvent.remove();
         };
     },
         []
